@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#80a95b">
+    <title>Meadow Walk</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&display=swap');
+
+      :root {
+        color-scheme: light;
+        font-family: 'DM Sans', sans-serif;
+        color: #293c2a;
+        background: #80a95b;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body { min-height: 100svh; }
+
+      .game {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        min-height: 100svh;
+        overflow: hidden;
+        isolation: isolate;
+        background: #80a95b;
+      }
+
+      #world {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      .vignette {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgb(27 43 23 / 12%), transparent 19%, transparent 76%, rgb(27 43 23 / 13%));
+      }
+
+      .topbar {
+        position: absolute;
+        z-index: 2;
+        top: 20px;
+        left: 22px;
+        right: 22px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        pointer-events: none;
+      }
+
+      .identity, .toolbar, .coordinates, .map-frame, .key-hint, .touch-pad, .pause-screen {
+        border: 1px solid rgb(255 255 255 / 56%);
+        background: rgb(248 246 226 / 91%);
+        box-shadow: 0 5px 18px rgb(36 50 30 / 12%), inset 0 1px 0 rgb(255 255 255 / 75%);
+        backdrop-filter: blur(10px);
+      }
+
+      .identity {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 15px 10px 11px;
+        border-radius: 7px;
+      }
+
+      .mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 5px;
+        color: #f7f4df;
+        background: #426444;
+      }
+
+      .identity-copy { display: grid; gap: 2px; }
+      .identity-copy strong { font-size: 13px; font-weight: 800; line-height: 1; }
+      .identity-copy span {
+        color: #71806a;
+        font-family: 'DM Mono', monospace;
+        font-size: 9px;
+        letter-spacing: 0.4px;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px;
+        border-radius: 7px;
+        pointer-events: auto;
+      }
+
+      .tool-button {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border: 0;
+        border-radius: 4px;
+        color: #426444;
+        background: transparent;
+        cursor: pointer;
+        transition: background 120ms ease, color 120ms ease;
+      }
+
+      .tool-button:hover { color: #263d27; background: #e7e9d5; }
+      .tool-button:focus-visible, .pad-button:focus-visible { outline: 2px solid #4a754a; outline-offset: 2px; }
+      .tool-button svg { width: 17px; height: 17px; }
+
+      .coordinates {
+        position: absolute;
+        z-index: 2;
+        top: 77px;
+        right: 22px;
+        padding: 7px 10px;
+        border-radius: 4px;
+        color: #60725b;
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+      }
+
+      .bottom-left {
+        position: absolute;
+        z-index: 2;
+        bottom: 20px;
+        left: 22px;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+      }
+
+      .key-hint {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 11px;
+        border-radius: 5px;
+      }
+
+      .key-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 21px);
+        grid-template-rows: repeat(2, 19px);
+        gap: 2px;
+      }
+
+      .key {
+        display: grid;
+        place-items: center;
+        border: 1px solid #d5d8c6;
+        border-bottom-width: 2px;
+        border-radius: 3px;
+        color: #52634e;
+        background: #fffef5;
+        font-family: 'DM Mono', monospace;
+        font-size: 9px;
+      }
+
+      .key:nth-child(1) { grid-column: 2; grid-row: 1; }
+      .key:nth-child(2) { grid-column: 1; grid-row: 2; }
+      .key:nth-child(3) { grid-column: 2; grid-row: 2; }
+      .key:nth-child(4) { grid-column: 3; grid-row: 2; }
+
+      .key-divider { width: 1px; height: 28px; background: #dedfce; }
+      .arrows { display: flex; align-items: center; gap: 3px; color: #69785e; }
+      .arrows svg { width: 15px; height: 15px; }
+
+      .map-frame {
+        position: absolute;
+        right: 22px;
+        bottom: 20px;
+        z-index: 2;
+        padding: 5px;
+        border-radius: 5px;
+        pointer-events: none;
+      }
+
+      #minimap { display: block; width: 116px; height: 76px; border-radius: 2px; }
+
+      .touch-pad {
+        position: absolute;
+        z-index: 2;
+        bottom: 16px;
+        left: 16px;
+        display: none;
+        grid-template-columns: repeat(3, 44px);
+        grid-template-rows: repeat(2, 44px);
+        gap: 3px;
+        padding: 4px;
+        border-radius: 7px;
+        pointer-events: auto;
+        touch-action: none;
+      }
+
+      .pad-button {
+        display: grid;
+        place-items: center;
+        border: 1px solid #d5d8c6;
+        border-radius: 4px;
+        color: #496247;
+        background: #fffef5;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .pad-button[data-dir="up"] { grid-column: 2; grid-row: 1; }
+      .pad-button[data-dir="left"] { grid-column: 1; grid-row: 2; }
+      .pad-button[data-dir="down"] { grid-column: 2; grid-row: 2; }
+      .pad-button[data-dir="right"] { grid-column: 3; grid-row: 2; }
+      .pad-button:active, .pad-button.is-down { background: #e4e9d3; }
+      .pad-button svg { width: 17px; height: 17px; }
+
+      .pause-screen {
+        position: absolute;
+        z-index: 3;
+        inset: 50% auto auto 50%;
+        display: none;
+        min-width: 190px;
+        padding: 18px 25px;
+        border-radius: 7px;
+        color: #344a32;
+        text-align: center;
+        transform: translate(-50%, -50%);
+      }
+
+      .pause-screen.is-visible { display: block; }
+      .pause-screen strong { font-size: 14px; font-weight: 800; }
+      .pause-screen span { display: block; margin-top: 4px; color: #71806a; font-size: 11px; }
+
+      @media (max-width: 600px) {
+        .topbar { top: 12px; left: 12px; right: 12px; }
+        .identity { gap: 8px; padding: 8px 10px 8px 8px; }
+        .mark { width: 30px; height: 30px; }
+        .identity-copy strong { font-size: 12px; }
+        .identity-copy span { font-size: 8px; }
+        .tool-button { width: 34px; height: 34px; }
+        .coordinates { top: 66px; right: 12px; }
+        .bottom-left { bottom: 16px; left: 16px; }
+        .key-hint { display: none; }
+        .touch-pad { display: grid; }
+        .map-frame { right: 12px; bottom: 16px; }
+        #minimap { width: 92px; height: 62px; }
+      }
+
+      @media (pointer: coarse) and (min-width: 601px) {
+        .key-hint { display: none; }
+        .touch-pad { display: grid; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game" aria-label="Meadow Walk game">
+      <canvas id="world" aria-label="A green meadow with a character you can walk around"></canvas>
+      <div class="vignette" aria-hidden="true"></div>
+
+      <header class="topbar">
+        <div class="identity">
+          <span class="mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none">
+              <path d="M12 20V11m0 4c-.3-3.1-2.2-5.1-5.4-5.5.3 3.3 2.2 5.2 5.4 5.5Zm0-3.2c.3-3.1 2.2-5.1 5.4-5.5-.3 3.3-2.2 5.2-5.4 5.5ZM12 11c-.2-3-1.1-4.6-2.8-6C7.6 7.3 8.6 9.2 12 11Zm0 0c.2-3 1.1-4.6 2.8-6 1.6 2.3.6 4.2-2.8 6Z" stroke="#f4f1db" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="identity-copy"><strong>Meadow Walk</strong><span>FIELD NO. 01</span></span>
+        </div>
+
+        <div class="toolbar" aria-label="Game controls">
+          <button class="tool-button" id="pause-button" type="button" aria-label="Pause game" title="Pause game">
+            <svg id="pause-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 5.5v9M13 5.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            <svg id="play-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" hidden><path d="m7 5.5 7 4.5-7 4.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="tool-button" id="reset-button" type="button" aria-label="Return to starting point" title="Return to starting point">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.3 8A6 6 0 1 1 4 11m.3-7v4H8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <output class="coordinates" id="coordinates" aria-label="Character coordinates">X 0000 · Y 0000</output>
+
+      <div class="bottom-left" aria-hidden="true">
+        <div class="key-hint">
+          <div class="key-grid"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span></div>
+          <span class="key-divider"></span>
+          <span class="arrows">
+            <svg viewBox="0 0 16 16" fill="none"><path d="m8 3 4.5 5H9.5v5h-3V8H3.5L8 3Z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 16 16" fill="none"><path d="m3 8 5-4.5v3h5v3H8v3L3 8Z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 16 16" fill="none"><path d="M8 13 3.5 8h3V3h3v5h3L8 13Z" fill="currentColor"/></svg>
+            <svg viewBox="0 0 16 16" fill="none"><path d="m13 8-5 4.5v-3H3V6h5V3l5 5Z" fill="currentColor"/></svg>
+          </span>
+        </div>
+      </div>
+
+      <div class="touch-pad" aria-label="Movement controls">
+        <button class="pad-button" type="button" data-dir="up" aria-label="Move up"><svg viewBox="0 0 20 20" fill="none"><path d="m10 4-5 6h3v6h4v-6h3l-5-6Z" fill="currentColor"/></svg></button>
+        <button class="pad-button" type="button" data-dir="left" aria-label="Move left"><svg viewBox="0 0 20 20" fill="none"><path d="m4 10 6-5v3h6v4h-6v3l-6-5Z" fill="currentColor"/></svg></button>
+        <button class="pad-button" type="button" data-dir="down" aria-label="Move down"><svg viewBox="0 0 20 20" fill="none"><path d="m10 16 5-6h-3V4H8v6H5l5 6Z" fill="currentColor"/></svg></button>
+        <button class="pad-button" type="button" data-dir="right" aria-label="Move right"><svg viewBox="0 0 20 20" fill="none"><path d="m16 10-6 5v-3H4V8h6V5l6 5Z" fill="currentColor"/></svg></button>
+      </div>
+
+      <div class="map-frame" aria-hidden="true"><canvas id="minimap" width="232" height="152"></canvas></div>
+      <div class="pause-screen" id="pause-screen" role="status" aria-live="polite"><strong>Taking a breather</strong><span>Press Esc to wander again</span></div>
+    </main>
+
+    <script>
+      (() => {
+        const canvas = document.querySelector('#world');
+        const ctx = canvas.getContext('2d');
+        const map = document.querySelector('#minimap');
+        const mapCtx = map.getContext('2d');
+        const coordinates = document.querySelector('#coordinates');
+        const pauseButton = document.querySelector('#pause-button');
+        const pauseScreen = document.querySelector('#pause-screen');
+        const pauseIcon = document.querySelector('#pause-icon');
+        const playIcon = document.querySelector('#play-icon');
+        const world = { width: 2600, height: 1900 };
+        const player = { x: 1300, y: 950, facing: 'down', step: 0 };
+        const start = { x: player.x, y: player.y };
+        const held = { up: false, down: false, left: false, right: false };
+        const directions = {
+          ArrowUp: 'up', w: 'up', W: 'up',
+          ArrowDown: 'down', s: 'down', S: 'down',
+          ArrowLeft: 'left', a: 'left', A: 'left',
+          ArrowRight: 'right', d: 'right', D: 'right'
+        };
+        let width = 0;
+        let height = 0;
+        let pixelRatio = 1;
+        let paused = false;
+        let previousTime = performance.now();
+        let coordinateRefresh = 0;
+
+        function randomGenerator(seed) {
+          let value = seed >>> 0;
+          return () => {
+            value = (value * 1664525 + 1013904223) >>> 0;
+            return value / 4294967296;
+          };
+        }
+
+        const random = randomGenerator(194725);
+        const grass = Array.from({ length: 2500 }, () => ({
+          x: 42 + random() * (world.width - 84),
+          y: 42 + random() * (world.height - 84),
+          length: 2 + random() * 5,
+          angle: random() * Math.PI,
+          shade: random() > 0.52 ? '#698f48' : '#a0c66d',
+          alpha: 0.19 + random() * 0.22
+        }));
+        const flowers = Array.from({ length: 185 }, () => ({
+          x: 55 + random() * (world.width - 110),
+          y: 55 + random() * (world.height - 110),
+          size: 1.6 + random() * 2.1,
+          color: ['#f5edbd', '#fffaf0', '#eacb72', '#de9d84'][Math.floor(random() * 4)],
+          stem: random() > 0.55
+        }));
+        const trees = Array.from({ length: 76 }, () => ({
+          x: 70 + random() * (world.width - 140),
+          y: 70 + random() * (world.height - 140),
+          size: 13 + random() * 19,
+          tone: random()
+        }));
+        const stones = Array.from({ length: 40 }, () => ({
+          x: 60 + random() * (world.width - 120),
+          y: 60 + random() * (world.height - 120),
+          size: 3 + random() * 7
+        }));
+
+        function resize() {
+          const bounds = canvas.getBoundingClientRect();
+          width = bounds.width;
+          height = bounds.height;
+          pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+          canvas.width = Math.round(width * pixelRatio);
+          canvas.height = Math.round(height * pixelRatio);
+          ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        }
+
+        function drawWorld(cameraX, cameraY) {
+          ctx.fillStyle = '#85ae60';
+          ctx.fillRect(0, 0, world.width, world.height);
+
+          ctx.save();
+          ctx.lineCap = 'round';
+          ctx.lineWidth = 64;
+          ctx.strokeStyle = '#b7bf7c';
+          ctx.beginPath();
+          ctx.moveTo(-60, 1450);
+          ctx.bezierCurveTo(460, 1250, 520, 870, 1120, 920);
+          ctx.bezierCurveTo(1610, 960, 1560, 420, 2220, 300);
+          ctx.bezierCurveTo(2390, 270, 2520, 310, 2690, 165);
+          ctx.stroke();
+          ctx.lineWidth = 54;
+          ctx.strokeStyle = '#d0c995';
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          ctx.globalAlpha = 0.12;
+          ctx.fillStyle = '#47744a';
+          for (let x = 0; x < world.width; x += 128) ctx.fillRect(x, 0, 1, world.height);
+          for (let y = 0; y < world.height; y += 128) ctx.fillRect(0, y, world.width, 1);
+          ctx.restore();
+
+          for (const blade of grass) {
+            const screenX = blade.x - cameraX;
+            const screenY = blade.y - cameraY;
+            if (screenX < -12 || screenY < -12 || screenX > width + 12 || screenY > height + 12) continue;
+            ctx.save();
+            ctx.globalAlpha = blade.alpha;
+            ctx.strokeStyle = blade.shade;
+            ctx.lineWidth = 1.35;
+            ctx.beginPath();
+            ctx.moveTo(blade.x - Math.cos(blade.angle) * blade.length / 2, blade.y - Math.sin(blade.angle) * blade.length / 2);
+            ctx.lineTo(blade.x + Math.cos(blade.angle) * blade.length / 2, blade.y + Math.sin(blade.angle) * blade.length / 2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          for (const tree of trees) {
+            const screenX = tree.x - cameraX;
+            const screenY = tree.y - cameraY;
+            if (screenX < -tree.size * 2 || screenY < -tree.size * 2 || screenX > width + tree.size * 2 || screenY > height + tree.size * 2) continue;
+            const green = tree.tone > 0.5 ? '#5d814a' : '#6a8d50';
+            ctx.fillStyle = 'rgb(45 60 36 / 13%)';
+            ctx.beginPath();
+            ctx.ellipse(tree.x + 3, tree.y + tree.size * 0.7, tree.size * 0.86, tree.size * 0.38, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#806849';
+            ctx.fillRect(tree.x - 2, tree.y + tree.size * 0.22, 4, tree.size * 0.55);
+            ctx.fillStyle = green;
+            ctx.beginPath();
+            ctx.arc(tree.x, tree.y, tree.size * 0.72, 0, Math.PI * 2);
+            ctx.arc(tree.x - tree.size * 0.38, tree.y + tree.size * 0.09, tree.size * 0.52, 0, Math.PI * 2);
+            ctx.arc(tree.x + tree.size * 0.38, tree.y + tree.size * 0.13, tree.size * 0.54, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgb(223 234 174 / 20%)';
+            ctx.beginPath();
+            ctx.arc(tree.x - tree.size * 0.2, tree.y - tree.size * 0.22, tree.size * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          for (const stone of stones) {
+            const screenX = stone.x - cameraX;
+            const screenY = stone.y - cameraY;
+            if (screenX < -16 || screenY < -16 || screenX > width + 16 || screenY > height + 16) continue;
+            ctx.fillStyle = 'rgb(54 65 46 / 15%)';
+            ctx.beginPath();
+            ctx.ellipse(stone.x + 1, stone.y + 3, stone.size * 1.1, stone.size * 0.63, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#a6a88b';
+            ctx.beginPath();
+            ctx.ellipse(stone.x, stone.y, stone.size, stone.size * 0.68, -0.16, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          for (const flower of flowers) {
+            const screenX = flower.x - cameraX;
+            const screenY = flower.y - cameraY;
+            if (screenX < -8 || screenY < -8 || screenX > width + 8 || screenY > height + 8) continue;
+            if (flower.stem) {
+              ctx.strokeStyle = 'rgb(64 104 56 / 68%)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(flower.x, flower.y + flower.size);
+              ctx.lineTo(flower.x + 1, flower.y + flower.size * 2.4);
+              ctx.stroke();
+            }
+            ctx.fillStyle = flower.color;
+            ctx.beginPath();
+            ctx.arc(flower.x, flower.y, flower.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#d4ad5f';
+            ctx.beginPath();
+            ctx.arc(flower.x, flower.y, flower.size * 0.32, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.strokeStyle = '#627b47';
+          ctx.lineWidth = 10;
+          ctx.strokeRect(4, 4, world.width - 8, world.height - 8);
+          ctx.strokeStyle = '#b3c77a';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(10, 10, world.width - 20, world.height - 20);
+        }
+
+        function drawPlayer(screenX, screenY, time) {
+          const moving = !paused && (held.up || held.down || held.left || held.right);
+          const bob = moving ? Math.sin(time * 0.013) * 1.7 : 0;
+          const stride = moving ? Math.sin(time * 0.017) * 3 : 0;
+
+          ctx.save();
+          ctx.translate(screenX, screenY + bob);
+          ctx.fillStyle = 'rgb(47 59 36 / 25%)';
+          ctx.beginPath();
+          ctx.ellipse(0, 12, 11, 5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#36483b';
+          ctx.beginPath();
+          ctx.ellipse(-4 + stride * 0.48, 9, 3, 4, -0.12, 0, Math.PI * 2);
+          ctx.ellipse(4 - stride * 0.48, 9, 3, 4, 0.12, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#557d59';
+          ctx.beginPath();
+          ctx.ellipse(0, 2, 7.7, 9, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ddaa78';
+          ctx.beginPath();
+          ctx.arc(0, -7, 6.3, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#66483a';
+          ctx.beginPath();
+          ctx.arc(-0.5, -8.8, 6.4, Math.PI, Math.PI * 2);
+          ctx.lineTo(5.5, -7.2);
+          ctx.quadraticCurveTo(0, -10.5, -5.5, -7.2);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#e8f0ce';
+          ctx.beginPath();
+          if (player.facing === 'up') {
+            ctx.ellipse(0, -3, 3, 1.2, 0, 0, Math.PI * 2);
+          } else if (player.facing === 'left') {
+            ctx.arc(-3.3, -6.3, 1.05, 0, Math.PI * 2);
+          } else if (player.facing === 'right') {
+            ctx.arc(3.3, -6.3, 1.05, 0, Math.PI * 2);
+          } else {
+            ctx.ellipse(-2, -6, 0.75, 1, 0, 0, Math.PI * 2);
+            ctx.ellipse(2, -6, 0.75, 1, 0, 0, Math.PI * 2);
+          }
+          ctx.fill();
+          ctx.restore();
+        }
+
+        function drawMinimap() {
+          mapCtx.clearRect(0, 0, map.width, map.height);
+          mapCtx.fillStyle = '#80a458';
+          mapCtx.fillRect(0, 0, map.width, map.height);
+          mapCtx.strokeStyle = '#d0c995';
+          mapCtx.lineWidth = 5;
+          mapCtx.beginPath();
+          mapCtx.moveTo(-5, map.height * 0.76);
+          mapCtx.bezierCurveTo(map.width * 0.23, map.height * 0.62, map.width * 0.25, map.height * 0.45, map.width * 0.43, map.height * 0.5);
+          mapCtx.bezierCurveTo(map.width * 0.64, map.height * 0.57, map.width * 0.59, map.height * 0.2, map.width + 5, map.height * 0.13);
+          mapCtx.stroke();
+          for (const tree of trees) {
+            mapCtx.fillStyle = '#55764a';
+            mapCtx.beginPath();
+            mapCtx.arc(tree.x / world.width * map.width, tree.y / world.height * map.height, 1.6, 0, Math.PI * 2);
+            mapCtx.fill();
+          }
+          mapCtx.fillStyle = '#fff8d8';
+          mapCtx.beginPath();
+          mapCtx.arc(player.x / world.width * map.width, player.y / world.height * map.height, 5, 0, Math.PI * 2);
+          mapCtx.fill();
+          mapCtx.strokeStyle = '#53774c';
+          mapCtx.lineWidth = 1.5;
+          mapCtx.stroke();
+        }
+
+        function render(time) {
+          const cameraX = Math.max(0, Math.min(world.width - width, player.x - width / 2));
+          const cameraY = Math.max(0, Math.min(world.height - height, player.y - height / 2));
+          ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+          ctx.clearRect(0, 0, width, height);
+          ctx.save();
+          ctx.translate(-cameraX, -cameraY);
+          drawWorld(cameraX, cameraY);
+          drawPlayer(player.x, player.y, time);
+          ctx.restore();
+          drawMinimap();
+
+          if (time - coordinateRefresh > 120) {
+            coordinates.value = `X ${String(Math.round(player.x)).padStart(4, '0')} · Y ${String(Math.round(player.y)).padStart(4, '0')}`;
+            coordinateRefresh = time;
+          }
+        }
+
+        function setPaused(value) {
+          paused = value;
+          pauseScreen.classList.toggle('is-visible', paused);
+          pauseButton.setAttribute('aria-label', paused ? 'Resume game' : 'Pause game');
+          pauseButton.title = paused ? 'Resume game' : 'Pause game';
+          pauseIcon.hidden = paused;
+          playIcon.hidden = !paused;
+          if (paused) {
+            for (const direction of Object.keys(held)) held[direction] = false;
+            document.querySelectorAll('.pad-button').forEach(button => button.classList.remove('is-down'));
+          }
+        }
+
+        function update(time) {
+          const delta = Math.min((time - previousTime) / 1000, 0.05);
+          previousTime = time;
+
+          if (!paused) {
+            let horizontal = Number(held.right) - Number(held.left);
+            let vertical = Number(held.down) - Number(held.up);
+            const magnitude = Math.hypot(horizontal, vertical) || 1;
+            horizontal /= magnitude;
+            vertical /= magnitude;
+            const speed = 205;
+            player.x = Math.max(24, Math.min(world.width - 24, player.x + horizontal * speed * delta));
+            player.y = Math.max(24, Math.min(world.height - 24, player.y + vertical * speed * delta));
+            if (horizontal !== 0 || vertical !== 0) {
+              player.facing = Math.abs(horizontal) > Math.abs(vertical)
+                ? (horizontal > 0 ? 'right' : 'left')
+                : (vertical > 0 ? 'down' : 'up');
+              player.step += delta * 10;
+            }
+          }
+
+          render(time);
+          window.requestAnimationFrame(update);
+        }
+
+        window.addEventListener('keydown', event => {
+          if (event.key === 'Escape') {
+            setPaused(!paused);
+            return;
+          }
+          const direction = directions[event.key];
+          if (!direction) return;
+          event.preventDefault();
+          held[direction] = true;
+        });
+
+        window.addEventListener('keyup', event => {
+          const direction = directions[event.key];
+          if (direction) held[direction] = false;
+        });
+
+        window.addEventListener('blur', () => {
+          for (const direction of Object.keys(held)) held[direction] = false;
+          document.querySelectorAll('.pad-button').forEach(button => button.classList.remove('is-down'));
+        });
+
+        document.querySelectorAll('.pad-button').forEach(button => {
+          const direction = button.dataset.dir;
+          button.addEventListener('pointerdown', event => {
+            event.preventDefault();
+            if (paused) return;
+            button.setPointerCapture(event.pointerId);
+            held[direction] = true;
+            button.classList.add('is-down');
+          });
+          const release = () => {
+            held[direction] = false;
+            button.classList.remove('is-down');
+          };
+          button.addEventListener('pointerup', release);
+          button.addEventListener('pointercancel', release);
+          button.addEventListener('lostpointercapture', release);
+        });
+
+        pauseButton.addEventListener('click', () => setPaused(!paused));
+        document.querySelector('#reset-button').addEventListener('click', () => {
+          player.x = start.x;
+          player.y = start.y;
+          player.facing = 'down';
+          setPaused(false);
+        });
+
+        window.addEventListener('resize', resize);
+        resize();
+        window.requestAnimationFrame(update);
+      })();
+    </script>
+  </body>
+</html>

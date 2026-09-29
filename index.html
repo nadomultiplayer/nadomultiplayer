@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#80a95b">
-    <title>Meadow Walk</title>
+    <title>Stormwatch</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700;800&display=swap');
 
@@ -232,6 +232,68 @@
       .pad-button:active, .pad-button.is-down { background: #e4e9d3; }
       .pad-button svg { width: 17px; height: 17px; }
 
+      .game-clock {
+        position: absolute;
+        z-index: 2;
+        top: 121px;
+        right: 22px;
+        padding: 7px 10px;
+        border-radius: 4px;
+        color: #60725b;
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
+        pointer-events: none;
+      }
+
+      .player-vitals {
+        position: absolute;
+        z-index: 2;
+        top: 78px;
+        left: 22px;
+        display: grid;
+        gap: 5px;
+        padding: 8px 10px;
+        border-radius: 4px;
+        color: #60725b;
+        font-family: 'DM Mono', monospace;
+        font-size: 9px;
+        pointer-events: none;
+      }
+
+      .health-track { width: 118px; height: 5px; overflow: hidden; border-radius: 4px; background: #dcdac5; }
+      .health-fill { width: 100%; height: 100%; background: #64865a; transition: width 120ms linear; }
+
+      .vehicle-dashboard {
+        position: absolute;
+        z-index: 2;
+        bottom: 16px;
+        left: 50%;
+        display: flex;
+        min-width: 250px;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 9px 15px;
+        border: 1px solid rgb(221 226 207 / 34%);
+        border-radius: 5px;
+        color: #e9ecd8;
+        background: rgb(39 52 44 / 90%);
+        box-shadow: 0 5px 18px rgb(36 50 30 / 20%);
+        font-family: 'DM Mono', monospace;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+
+      .vehicle-dashboard[hidden] { display: none; }
+      .dashboard-speed { display: grid; justify-items: center; gap: 2px; }
+      .dashboard-speed strong { font-size: 19px; font-weight: 500; font-variant-numeric: tabular-nums; }
+      .dashboard-speed small { color: #b9c4ad; font-size: 8px; }
+      .dashboard-engine { display: flex; align-items: center; gap: 5px; color: #83907e; font-size: 9px; }
+      .dashboard-engine svg { width: 19px; height: 19px; }
+      .dashboard-engine.is-on { color: #f0a35c; }
+      .dashboard-occupants { max-width: 120px; color: #cbd3bd; font-size: 9px; line-height: 1.4; white-space: pre-line; }
+
       .pause-screen {
         position: absolute;
         z-index: 3;
@@ -249,6 +311,181 @@
       .pause-screen strong { font-size: 14px; font-weight: 800; }
       .pause-screen span { display: block; margin-top: 4px; color: #71806a; font-size: 11px; }
 
+      .menu-overlay, .death-screen {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: linear-gradient(135deg, rgb(24 39 31 / 68%), rgb(35 48 39 / 46%));
+        backdrop-filter: blur(3px);
+      }
+
+      .menu-card, .death-card {
+        width: min(430px, 100%);
+        padding: 28px;
+        border: 1px solid rgb(255 255 255 / 70%);
+        border-radius: 7px;
+        color: #293c2a;
+        background: #f8f6e2;
+        box-shadow: 0 18px 55px rgb(18 30 23 / 28%);
+      }
+
+      .menu-kicker, .phone-kicker {
+        color: #71806a;
+        font-family: 'DM Mono', monospace;
+        font-size: 10px;
+      }
+
+      .menu-card h1 { margin: 7px 0 5px; font-size: 32px; line-height: 1.05; }
+      .menu-card > p { margin: 0 0 22px; color: #6e7b67; font-size: 13px; }
+      .menu-form { display: grid; gap: 17px; }
+      .menu-form label, .menu-form legend { color: #50624d; font-size: 12px; font-weight: 700; }
+      .menu-form input {
+        width: 100%;
+        margin-top: 7px;
+        padding: 11px 12px;
+        border: 1px solid #d5d8c6;
+        border-radius: 4px;
+        color: #293c2a;
+        background: #fffef5;
+        font: inherit;
+      }
+
+      .menu-form input:focus-visible, .chat-input:focus-visible { outline: 2px solid #557d59; outline-offset: 2px; }
+      .color-picker { display: grid; gap: 9px; margin: 0; padding: 0; border: 0; }
+      .swatches { display: flex; gap: 9px; }
+      .color-swatch {
+        width: 30px;
+        height: 30px;
+        border: 3px solid #f8f6e2;
+        border-radius: 50%;
+        outline: 1px solid #cbd0bf;
+        cursor: pointer;
+      }
+
+      .color-swatch[aria-pressed="true"] { outline: 2px solid #344a32; }
+      .start-button, .chat-send {
+        min-height: 42px;
+        border: 0;
+        border-radius: 4px;
+        color: #fffdf1;
+        background: #426444;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .start-button:hover, .chat-send:hover { background: #344f37; }
+
+      .phone-panel {
+        position: absolute;
+        z-index: 3;
+        right: 22px;
+        bottom: 22px;
+        display: flex;
+        width: min(360px, calc(100vw - 32px));
+        height: min(590px, calc(100svh - 110px));
+        min-height: 380px;
+        flex-direction: column;
+        overflow: hidden;
+        border: 5px solid #314137;
+        border-radius: 22px;
+        color: #293c2a;
+        background: #f6f5e9;
+        box-shadow: 0 14px 40px rgb(23 36 27 / 32%);
+      }
+
+      .phone-header {
+        display: flex;
+        min-height: 60px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 15px;
+        border-bottom: 1px solid #dfe1d1;
+      }
+
+      .phone-header strong { display: block; font-size: 13px; }
+      .phone-header small { display: block; margin-top: 3px; color: #78826f; font-family: 'DM Mono', monospace; font-size: 9px; }
+      .phone-actions { display: flex; gap: 4px; }
+      .phone-action, .app-back {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border: 0;
+        border-radius: 4px;
+        color: #52634e;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      .phone-action:hover, .app-back:hover { background: #e7e9d5; }
+      .phone-action svg, .app-back svg { width: 17px; height: 17px; }
+      .phone-content { display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 16px; }
+      .phone-home h2, .app-title { margin: 0 0 14px; font-size: 20px; }
+      .phone-apps { display: grid; gap: 9px; }
+      .phone-app {
+        display: flex;
+        min-height: 64px;
+        align-items: center;
+        gap: 11px;
+        padding: 9px;
+        border: 1px solid #dfe1d1;
+        border-radius: 5px;
+        color: #334a35;
+        background: #fffef5;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .phone-app:hover { border-color: #a7b697; background: #f3f4e7; }
+      .app-icon { display: grid; width: 38px; height: 38px; flex: 0 0 38px; place-items: center; border-radius: 8px; color: #fffef5; background: #567a59; }
+      .app-icon.weather { background: #69849b; }
+      .app-icon svg { width: 21px; height: 21px; }
+      .phone-app strong { display: block; font-size: 12px; }
+      .phone-app small { display: block; margin-top: 3px; color: #78826f; font-size: 10px; }
+      .app-view { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+      .app-view[hidden], .phone-home[hidden] { display: none; }
+      .app-bar { display: flex; align-items: center; gap: 7px; margin-bottom: 10px; }
+      .app-bar .app-title { margin: 0; font-size: 17px; }
+      .chat-status { margin: 0 0 8px; color: #74816d; font-size: 10px; }
+      .chat-log { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: 7px; overflow: auto; padding: 5px 1px 12px; }
+      .chat-message { padding-bottom: 7px; border-bottom: 1px solid #e2e4d6; overflow-wrap: anywhere; }
+      .chat-message strong { margin-right: 5px; color: #4a684b; font-size: 10px; }
+      .chat-message span { color: #465344; font-size: 11px; line-height: 1.4; }
+      .chat-form { display: flex; gap: 6px; padding-top: 10px; border-top: 1px solid #dfe1d1; }
+      .chat-input { min-width: 0; flex: 1; padding: 9px; border: 1px solid #d5d8c6; border-radius: 4px; color: #293c2a; background: #fffef5; font: inherit; font-size: 11px; }
+      .chat-send { min-height: 36px; padding: 0 11px; font-size: 11px; }
+      .weather-map-wrap { position: relative; height: 180px; overflow: hidden; border: 1px solid #bdc9a8; border-radius: 4px; background: #85ae60; }
+      #weather-map { display: block; width: 100%; height: 100%; }
+      .weather-status { margin: 9px 0; color: #66765e; font-family: 'DM Mono', monospace; font-size: 9px; }
+      .forecast-list { display: grid; gap: 7px; overflow: auto; }
+      .forecast-item { padding: 8px 0; border-top: 1px solid #dfe1d1; }
+      .forecast-item strong { display: block; color: #934e42; font-size: 11px; }
+      .forecast-item span { display: block; margin-top: 3px; color: #63715d; font-family: 'DM Mono', monospace; font-size: 9px; }
+      .contract-balance { margin: 0 0 14px; color: #728069; font-family: 'DM Mono', monospace; font-size: 10px; }
+      .contract-card { padding: 12px; border: 1px solid #dfe1d1; border-radius: 5px; background: #fffef5; }
+      .contract-card strong { display: block; margin-bottom: 6px; color: #526b4c; font-size: 12px; }
+      .contract-card p { margin: 0 0 10px; color: #71806a; font-size: 10px; line-height: 1.5; }
+      .contract-progress { display: block; width: 100%; height: 7px; accent-color: #63845b; }
+      .contract-progress-label { display: flex; justify-content: space-between; margin-top: 6px; color: #71806a; font-family: 'DM Mono', monospace; font-size: 9px; }
+      .contract-reward { margin-top: 10px; color: #8d7545; font-family: 'DM Mono', monospace; font-size: 10px; }
+      .vehicle-app-status { margin: 0 0 12px; color: #71806a; font-size: 11px; line-height: 1.5; }
+      .vehicle-app-button { width: 100%; margin-top: 8px; }
+
+      .death-screen {
+        z-index: 4;
+        background: rgb(24 32 34 / 66%);
+      }
+
+      .menu-overlay[hidden], .phone-panel[hidden], .death-screen[hidden] { display: none; }
+      .death-card { text-align: center; }
+      .death-card h2 { margin: 0 0 7px; font-size: 23px; }
+      .death-card p { margin: 0 0 18px; color: #6e7b67; font-size: 12px; }
+
       @media (max-width: 600px) {
         .topbar { top: 12px; left: 12px; right: 12px; }
         .identity { gap: 8px; padding: 8px 10px 8px 8px; }
@@ -257,11 +494,16 @@
         .identity-copy span { font-size: 8px; }
         .tool-button { width: 34px; height: 34px; }
         .coordinates { top: 66px; right: 12px; }
+        .game-clock { top: 105px; right: 12px; }
+        .player-vitals { top: 66px; left: 12px; }
         .bottom-left { bottom: 16px; left: 16px; }
         .key-hint { display: none; }
         .touch-pad { display: grid; }
         .map-frame { right: 12px; bottom: 16px; }
         #minimap { width: 92px; height: 62px; }
+        .phone-panel { right: 12px; bottom: 12px; width: calc(100vw - 24px); height: min(590px, calc(100svh - 24px)); }
+        .vehicle-dashboard { bottom: 12px; min-width: 220px; gap: 10px; padding: 8px 10px; }
+        .menu-card, .death-card { padding: 22px; }
       }
 
       @media (pointer: coarse) and (min-width: 601px) {
@@ -275,7 +517,7 @@
     </style>
   </head>
   <body>
-    <main class="game" aria-label="Meadow Walk game">
+    <main class="game" aria-label="Stormwatch game">
       <canvas id="world" aria-label="A green meadow with a character you can walk around"></canvas>
       <div class="vignette" aria-hidden="true"></div>
 
@@ -283,24 +525,32 @@
         <div class="identity">
           <span class="mark" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="21" height="21" fill="none">
-              <path d="M12 20V11m0 4c-.3-3.1-2.2-5.1-5.4-5.5.3 3.3 2.2 5.2 5.4 5.5Zm0-3.2c.3-3.1 2.2-5.1 5.4-5.5-.3 3.3-2.2 5.2-5.4 5.5ZM12 11c-.2-3-1.1-4.6-2.8-6C7.6 7.3 8.6 9.2 12 11Zm0 0c.2-3 1.1-4.6 2.8-6 1.6 2.3.6 4.2-2.8 6Z" stroke="#f4f1db" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M5.5 13.5a4 4 0 0 1 3.8-4 5.1 5.1 0 0 1 9.9 1.2 3.2 3.2 0 0 1-.7 6.3H7a3.5 3.5 0 0 1-1.5-3.5Z" stroke="#f4f1db" stroke-width="1.35" stroke-linejoin="round"/><path d="m12.8 11.5-2 3.2h2.3l-1.2 2.5 3.3-4h-2.4l1.2-1.7" fill="#f4f1db"/>
             </svg>
           </span>
-          <span class="identity-copy"><strong>Meadow Walk</strong><span>FIELD NO. 01</span></span>
+          <span class="identity-copy"><strong>Stormwatch</strong><span id="connection-status">WAITING · START</span></span>
         </div>
 
         <div class="toolbar" aria-label="Game controls">
+          <button class="tool-button" id="phone-button" type="button" aria-label="Open phone" title="Open phone" aria-expanded="false">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><rect x="5.5" y="2.5" width="9" height="15" rx="1.7" stroke="currentColor" stroke-width="1.5"/><path d="M8 5h4m-3 10h2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
+          </button>
           <button class="tool-button" id="pause-button" type="button" aria-label="Pause game" title="Pause game">
             <svg id="pause-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M7 5.5v9M13 5.5v9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
             <svg id="play-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true" hidden><path d="m7 5.5 7 4.5-7 4.5v-9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
           </button>
-          <button class="tool-button" id="reset-button" type="button" aria-label="Return to starting point" title="Return to starting point">
+          <button class="tool-button" id="reset-button" type="button" aria-label="Random respawn" title="Random respawn">
             <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.3 8A6 6 0 1 1 4 11m.3-7v4H8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
       </header>
 
       <output class="coordinates" id="coordinates" aria-label="Character coordinates">X 0000 · Y 0000</output>
+      <output class="game-clock" id="game-clock" aria-label="In-game time">06:00 · DAYLIGHT</output>
+      <div class="player-vitals" id="player-vitals" aria-label="Player health">
+        <span id="player-health-label">HEALTH · 100%</span>
+        <div class="health-track"><div class="health-fill" id="player-health-fill"></div></div>
+      </div>
 
       <div class="bottom-left" aria-hidden="true">
         <div class="key-hint">
@@ -324,22 +574,190 @@
 
       <div class="map-frame" aria-hidden="true"><canvas id="minimap" width="232" height="152"></canvas></div>
       <div class="pause-screen" id="pause-screen" role="status" aria-live="polite"><strong>Taking a breather</strong><span>Press Esc to wander again</span></div>
+
+      <section class="phone-panel" id="phone-panel" aria-label="In-game phone" hidden>
+        <header class="phone-header">
+          <div><strong id="phone-view-title">Field phone</strong><small id="phone-status">FIELD NETWORK</small></div>
+          <div class="phone-actions">
+            <button class="phone-action" id="phone-home-button" type="button" aria-label="Phone home" title="Phone home" hidden><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m12 4-6 6 6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button class="phone-action" id="phone-close-button" type="button" aria-label="Close phone" title="Close phone"><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+          </div>
+        </header>
+        <div class="phone-content">
+          <section class="phone-home" id="phone-home">
+            <h2>Field apps</h2>
+            <div class="phone-apps">
+              <button class="phone-app" type="button" data-open-app="messages">
+                <span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5h16v11H9l-5 3v-14Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 10h8m-8 3h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                <span><strong>Messages</strong><small>Global storm-chaser chat</small></span>
+              </button>
+              <button class="phone-app" type="button" data-open-app="weather">
+                <span class="app-icon weather" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M6 17.5a4 4 0 0 1 .4-8 5.7 5.7 0 0 1 10.9 1.1 3.5 3.5 0 0 1 .2 7H6Z" stroke="currentColor" stroke-width="1.6"/><path d="m10 13-1.2 2.4h2.3l-.8 2.1 3-3.5h-2.2l1-2H10Z" fill="currentColor"/></svg></span>
+                <span><strong>Weather radar</strong><small>Tornado track projections</small></span>
+              </button>
+              <button class="phone-app" type="button" data-open-app="contracts">
+                <span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10a2 2 0 0 1 2 2v14l-7-3-7 3V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6"/><path d="M9 8h6m-6 3h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                <span><strong>Contracts</strong><small>Field work and payouts</small></span>
+              </button>
+              <button class="phone-app" type="button" data-open-app="vehicle">
+                <span class="app-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 11 1.7-4.2A2 2 0 0 1 8.6 5.5h6.8a2 2 0 0 1 1.9 1.3L19 11v7h-2v-2H7v2H5v-7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M5.5 11h13m-11 3h1m9 0h1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+                <span><strong>Vehicles</strong><small>Summon a field pickup</small></span>
+              </button>
+            </div>
+          </section>
+
+          <section class="app-view" id="messages-view" hidden>
+            <div class="app-bar"><h2 class="app-title">Global chat</h2></div>
+            <p class="chat-status" id="chat-status" aria-live="polite">Join the field network to message other chasers.</p>
+            <div class="chat-log" id="chat-log" role="log" aria-live="polite"></div>
+            <form class="chat-form" id="chat-form">
+              <input class="chat-input" id="chat-input" name="message" type="text" maxlength="180" placeholder="Message the chasers" autocomplete="off" aria-label="Chat message">
+              <button class="chat-send" type="submit" aria-label="Send message">Send</button>
+            </form>
+          </section>
+
+          <section class="app-view" id="weather-view" hidden>
+            <div class="app-bar"><h2 class="app-title">Storm radar</h2></div>
+            <div class="weather-map-wrap"><canvas id="weather-map" width="320" height="220" aria-label="Current and forecast tornado positions"></canvas></div>
+            <p class="weather-status" id="radar-status" aria-live="polite">Waiting for server radar…</p>
+            <div class="forecast-list" id="forecast-list"></div>
+          </section>
+
+          <section class="app-view" id="contracts-view" hidden>
+            <div class="app-bar"><h2 class="app-title">Field contracts</h2></div>
+            <p class="contract-balance" id="contract-balance">AVAILABLE FUNDS · $0</p>
+            <div class="contract-card">
+              <strong id="contract-title">SAFE DISTANCE OBSERVATION</strong>
+              <p id="contract-description">Hold a safe distance from a tracked tornado to record its path.</p>
+              <progress class="contract-progress" id="contract-progress" max="20" value="0"></progress>
+              <div class="contract-progress-label"><span id="contract-progress-label">Waiting for radar</span><span id="contract-target-label">NO TRACK</span></div>
+              <div class="contract-reward" id="contract-reward">PAYOUT · --</div>
+            </div>
+          </section>
+
+          <section class="app-view" id="vehicle-view" hidden>
+            <div class="app-bar"><h2 class="app-title">Fleet dispatch</h2></div>
+            <p class="vehicle-app-status" id="vehicle-app-status">No pickup in the field. Dispatch a two-seat truck.</p>
+            <p class="vehicle-app-status" id="vehicle-app-detail">Two seats · wind and debris can damage the engine.</p>
+            <button class="start-button vehicle-app-button" id="vehicle-action-button" type="button">Summon pickup</button>
+          </section>
+        </div>
+      </section>
+
+      <section class="vehicle-dashboard" id="vehicle-dashboard" aria-label="Pickup dashboard" hidden>
+        <div class="dashboard-speed"><strong id="vehicle-speed">000</strong><small>MPH</small></div>
+        <div class="dashboard-engine" id="engine-warning"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 9h3l2-3h6l2 3h3v8h-3l-2 2H9l-2-2H4V9Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9 12h6m-5 3h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>CHECK ENGINE</span></div>
+        <div class="dashboard-occupants" id="vehicle-occupants">DRIVER · --<br>PASSENGER · --</div>
+      </section>
+
+      <section class="menu-overlay" id="main-menu" aria-labelledby="menu-title">
+        <div class="menu-card">
+          <span class="menu-kicker">FIELD BRIEFING · 01</span>
+          <h1 id="menu-title">Stormwatch</h1>
+          <p>Pick your callsign and head into the field.</p>
+          <form class="menu-form" id="start-form">
+            <label for="player-name">Chaser name
+              <input id="player-name" name="name" type="text" maxlength="16" autocomplete="nickname" required>
+            </label>
+            <fieldset class="color-picker">
+              <legend>Jacket color</legend>
+              <div class="swatches">
+                <button class="color-swatch" type="button" data-player-color="#557d59" aria-label="Forest green jacket" aria-pressed="true" style="background:#557d59"></button>
+                <button class="color-swatch" type="button" data-player-color="#b16d50" aria-label="Rust jacket" aria-pressed="false" style="background:#b16d50"></button>
+                <button class="color-swatch" type="button" data-player-color="#52758a" aria-label="Blue jacket" aria-pressed="false" style="background:#52758a"></button>
+                <button class="color-swatch" type="button" data-player-color="#a18a46" aria-label="Gold jacket" aria-pressed="false" style="background:#a18a46"></button>
+                <button class="color-swatch" type="button" data-player-color="#84678f" aria-label="Violet jacket" aria-pressed="false" style="background:#84678f"></button>
+              </div>
+            </fieldset>
+            <button class="start-button" type="submit">Enter the field</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="death-screen" id="death-screen" aria-labelledby="death-title" hidden>
+        <div class="death-card">
+          <span class="menu-kicker">TORNADO WARNING</span>
+          <h2 id="death-title">Caught in the storm</h2>
+          <p>Give the circulation more room on your next run.</p>
+          <button class="start-button" id="respawn-button" type="button">Respawn in the field</button>
+        </div>
+      </section>
     </main>
 
+    <script>
+      window.MEADOW_SUPABASE = {
+        url: 'https://nnximdtglwzoetwrszll.supabase.co',
+        anonKey: 'sb_publishable_87XSoFJ57F_bP5KQu3FTfw_UkV8MxiQ',
+        room: 'meadow-field-01'
+      };
+    </script>
     <script>
       (() => {
         const canvas = document.querySelector('#world');
         const ctx = canvas.getContext('2d');
         const map = document.querySelector('#minimap');
         const mapCtx = map.getContext('2d');
+        const radarCanvas = document.querySelector('#weather-map');
+        const radarCtx = radarCanvas.getContext('2d');
         const coordinates = document.querySelector('#coordinates');
+        const gameClock = document.querySelector('#game-clock');
         const pauseButton = document.querySelector('#pause-button');
         const pauseScreen = document.querySelector('#pause-screen');
         const pauseIcon = document.querySelector('#pause-icon');
         const playIcon = document.querySelector('#play-icon');
+        const connectionStatus = document.querySelector('#connection-status');
+        const mainMenu = document.querySelector('#main-menu');
+        const startForm = document.querySelector('#start-form');
+        const playerNameInput = document.querySelector('#player-name');
+        const phoneButton = document.querySelector('#phone-button');
+        const phonePanel = document.querySelector('#phone-panel');
+        const phoneHome = document.querySelector('#phone-home');
+        const phoneHomeButton = document.querySelector('#phone-home-button');
+        const phoneViewTitle = document.querySelector('#phone-view-title');
+        const phoneStatus = document.querySelector('#phone-status');
+        const messagesView = document.querySelector('#messages-view');
+        const weatherView = document.querySelector('#weather-view');
+        const chatStatus = document.querySelector('#chat-status');
+        const chatLog = document.querySelector('#chat-log');
+        const chatForm = document.querySelector('#chat-form');
+        const chatInput = document.querySelector('#chat-input');
+        const radarStatus = document.querySelector('#radar-status');
+        const forecastList = document.querySelector('#forecast-list');
+        const contractsView = document.querySelector('#contracts-view');
+        const contractBalance = document.querySelector('#contract-balance');
+        const contractTitle = document.querySelector('#contract-title');
+        const contractDescription = document.querySelector('#contract-description');
+        const contractProgress = document.querySelector('#contract-progress');
+        const contractProgressLabel = document.querySelector('#contract-progress-label');
+        const contractTargetLabel = document.querySelector('#contract-target-label');
+        const contractReward = document.querySelector('#contract-reward');
+        const vehicleView = document.querySelector('#vehicle-view');
+        const vehicleAppStatus = document.querySelector('#vehicle-app-status');
+        const vehicleAppDetail = document.querySelector('#vehicle-app-detail');
+        const vehicleActionButton = document.querySelector('#vehicle-action-button');
+        const vehicleDashboard = document.querySelector('#vehicle-dashboard');
+        const vehicleSpeedDisplay = document.querySelector('#vehicle-speed');
+        const engineWarning = document.querySelector('#engine-warning');
+        const vehicleOccupantsDisplay = document.querySelector('#vehicle-occupants');
+        const playerHealthLabel = document.querySelector('#player-health-label');
+        const playerHealthFill = document.querySelector('#player-health-fill');
+        const deathScreen = document.querySelector('#death-screen');
         const world = { width: 2600, height: 1900 };
-        const player = { x: 1300, y: 950, facing: 'down', step: 0 };
-        const start = { x: player.x, y: player.y };
+        const realDayMilliseconds = 60 * 60 * 1000;
+        const realDaylightMilliseconds = 45 * 60 * 1000;
+        const colors = ['#557d59', '#b16d50', '#52758a', '#a18a46', '#84678f'];
+        const player = {
+          id: globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
+          name: `gary${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          x: 1300,
+          y: 950,
+          facing: 'down',
+          moving: false,
+          health: 100,
+          vehicleId: null
+        };
+        const remotePlayers = new Map();
         const held = { up: false, down: false, left: false, right: false };
         const directions = {
           ArrowUp: 'up', w: 'up', W: 'up',
@@ -350,9 +768,39 @@
         let width = 0;
         let height = 0;
         let pixelRatio = 1;
-        let paused = false;
+        let paused = true;
+        let dead = false;
+        let gameStarted = false;
+        let phoneOpen = false;
+        let phoneApp = 'home';
         let previousTime = performance.now();
         let coordinateRefresh = 0;
+        let clockRefresh = 0;
+        let weatherRefresh = 0;
+        let realtimeChannel = null;
+        let supabaseClient = null;
+        let multiplayerReady = false;
+        let lastPresenceSent = 0;
+        let firstPresenceSync = true;
+        let serverTimeOffset = 0;
+        let tornadoes = [];
+        let radarReady = false;
+        let tornadoFetchInFlight = false;
+        let nextTornadoFetch = 0;
+        let truck = null;
+        let wallet = Number(localStorage.getItem('stormwatch-wallet') || 0);
+        let contractStormId = null;
+        let contractProgressSeconds = 0;
+        let contractCompleted = false;
+        const completedContracts = new Set();
+        let contractNotice = '';
+        let contractNoticeUntil = 0;
+        let nextDebrisDamageAt = 0;
+        let lastStormDamageAt = 0;
+        let truckFlingUntil = 0;
+        let truckVelocityX = 0;
+        let truckVelocityY = 0;
+        let vehicleUiRefresh = 0;
 
         function randomGenerator(seed) {
           let value = seed >>> 0;
@@ -384,11 +832,281 @@
           size: 13 + random() * 19,
           tone: random()
         }));
+        const bushes = Array.from({ length: 120 }, () => ({
+          x: 55 + random() * (world.width - 110),
+          y: 55 + random() * (world.height - 110),
+          size: 5 + random() * 8,
+          tone: random()
+        }));
+        const debris = [...trees, ...bushes].map(prop => Object.assign(prop, {
+          kind: trees.includes(prop) ? 'tree' : 'bush',
+          homeX: prop.x,
+          homeY: prop.y,
+          flyX: prop.x,
+          flyY: prop.y,
+          vx: 0,
+          vy: 0,
+          airborne: false,
+          thrown: false,
+          airTime: 0,
+          windExposure: 0,
+          rotation: 0,
+          spin: 0,
+          lastTruckHitAt: 0,
+          sway: 0,
+          windSeed: random() * Math.PI * 2
+        }));
         const stones = Array.from({ length: 40 }, () => ({
           x: 60 + random() * (world.width - 120),
           y: 60 + random() * (world.height - 120),
           size: 3 + random() * 7
         }));
+
+        function randomSpawn(nearbyPlayers = [], dangerZones = []) {
+          for (let attempt = 0; attempt < 200; attempt++) {
+            const centralSpawn = attempt < 120;
+            const x = centralSpawn
+              ? world.width / 2 + (Math.random() - 0.5) * 680
+              : 48 + Math.random() * (world.width - 96);
+            const y = centralSpawn
+              ? world.height / 2 + (Math.random() - 0.5) * 480
+              : 48 + Math.random() * (world.height - 96);
+            const nearTree = trees.some(tree => Math.hypot(tree.x - x, tree.y - y) < tree.size + 30);
+            const nearPlayer = nearbyPlayers.some(other => Math.hypot(other.x - x, other.y - y) < 90);
+            const nearStorm = dangerZones.some(storm => {
+              const position = getTornadoPosition(storm);
+              return Math.hypot(position.x - x, position.y - y) < (storm.lethal_radius || 118) + 100;
+            });
+            if (!nearTree && !nearPlayer && !nearStorm) return { x, y };
+          }
+          return { x: world.width / 2, y: world.height / 2 };
+        }
+
+        Object.assign(player, randomSpawn());
+        playerNameInput.value = player.name;
+
+        function gameTimeAt(timestamp = Date.now() + serverTimeOffset) {
+          const cycle = ((timestamp % realDayMilliseconds) + realDayMilliseconds) % realDayMilliseconds;
+          const night = cycle >= realDaylightMilliseconds;
+          const phaseElapsed = night ? cycle - realDaylightMilliseconds : cycle;
+          const phaseDuration = night
+            ? realDayMilliseconds - realDaylightMilliseconds
+            : realDaylightMilliseconds;
+          const phaseMinutes = phaseElapsed / phaseDuration * 720;
+          const minutes = (night ? 1080 + phaseMinutes : 360 + phaseMinutes) % 1440;
+          const hours = Math.floor(minutes / 60);
+          const minute = Math.floor(minutes % 60);
+          let darkness = 0;
+          if (!night && cycle < 60_000) {
+            darkness = 0.4 * (1 - cycle / 60_000);
+          } else if (night && cycle < realDaylightMilliseconds + 60_000) {
+            darkness = 0.4 * ((cycle - realDaylightMilliseconds) / 60_000);
+          } else if (night && cycle > realDayMilliseconds - 60_000) {
+            darkness = 0.4 * ((realDayMilliseconds - cycle) / 60_000);
+          } else if (night) {
+            darkness = 0.4;
+          }
+          return {
+            label: `${String(hours).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+            night,
+            darkness
+          };
+        }
+
+        function getTornadoPosition(storm, timestamp = Date.now() + serverTimeOffset) {
+          const updatedAt = Date.parse(storm.updated_at);
+          const elapsed = Number.isFinite(updatedAt)
+            ? Math.max(0, Math.min(12, (timestamp - updatedAt) / 1000))
+            : 0;
+          return {
+            x: Math.max(60, Math.min(world.width - 60, storm.x + Math.cos(storm.heading) * storm.speed * elapsed)),
+            y: Math.max(60, Math.min(world.height - 60, storm.y + Math.sin(storm.heading) * storm.speed * elapsed))
+          };
+        }
+
+        function predictTornadoPosition(storm, gameMinutesAhead) {
+          const now = Date.now() + serverTimeOffset;
+          const position = getTornadoPosition(storm, now);
+          let remainingMinutes = Math.max(0, gameMinutesAhead);
+          let cycle = ((now % realDayMilliseconds) + realDayMilliseconds) % realDayMilliseconds;
+          let secondsAhead = 0;
+          while (remainingMinutes > 0) {
+            const daylight = cycle < realDaylightMilliseconds;
+            const phaseEnd = daylight ? realDaylightMilliseconds : realDayMilliseconds;
+            const millisecondsPerGameMinute = daylight
+              ? realDaylightMilliseconds / 720
+              : (realDayMilliseconds - realDaylightMilliseconds) / 720;
+            const phaseMinutesLeft = (phaseEnd - cycle) / millisecondsPerGameMinute;
+            const step = Math.min(remainingMinutes, phaseMinutesLeft);
+            secondsAhead += step * millisecondsPerGameMinute / 1000;
+            remainingMinutes -= step;
+            cycle += step * millisecondsPerGameMinute;
+            if (cycle >= realDayMilliseconds) cycle = 0;
+          }
+          return {
+            x: Math.max(60, Math.min(world.width - 60, position.x + Math.cos(storm.heading) * storm.speed * secondsAhead)),
+            y: Math.max(60, Math.min(world.height - 60, position.y + Math.sin(storm.heading) * storm.speed * secondsAhead))
+          };
+        }
+
+        function drawTornado(storm, timestamp) {
+          const position = getTornadoPosition(storm, timestamp);
+          ctx.save();
+          ctx.translate(position.x, position.y);
+          const warningRadius = storm.warning_radius || 420;
+          const lethalRadius = storm.lethal_radius || 118;
+          ctx.fillStyle = 'rgb(223 188 104 / 5%)';
+          ctx.beginPath();
+          ctx.arc(0, 0, warningRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgb(235 206 128 / 38%)';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([8, 9]);
+          ctx.beginPath();
+          ctx.arc(0, 0, warningRadius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = 'rgb(164 78 63 / 10%)';
+          ctx.beginPath();
+          ctx.arc(0, 0, lethalRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.rotate(timestamp * 0.0014);
+          ctx.fillStyle = 'rgb(55 52 49 / 20%)';
+          ctx.beginPath();
+          ctx.ellipse(3, 17, 31, 11, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#68716b';
+          ctx.beginPath();
+          ctx.moveTo(-18, -25);
+          ctx.quadraticCurveTo(0, -35, 18, -25);
+          ctx.lineTo(10, 4);
+          ctx.quadraticCurveTo(4, 15, 3, 26);
+          ctx.lineTo(-3, 26);
+          ctx.quadraticCurveTo(-4, 15, -10, 4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#d7d0ba';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(0, -17, 16, 5, 0, 0.1, Math.PI * 1.8);
+          ctx.ellipse(0, -2, 11, 4, 0, Math.PI, Math.PI * 2.8);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        function closestTornadoAt(x, y, timestamp = Date.now() + serverTimeOffset) {
+          let closest = null;
+          let minDistance = Infinity;
+          for (const storm of tornadoes) {
+            const position = getTornadoPosition(storm, timestamp);
+            const distance = Math.hypot(position.x - x, position.y - y);
+            if (distance < minDistance) {
+              minDistance = distance;
+              closest = { storm, ...position, distance };
+            }
+          }
+          return closest;
+        }
+
+        function resetDebris(prop) {
+          prop.airborne = false;
+          prop.thrown = false;
+          prop.airTime = 0;
+          prop.windExposure = 0;
+          prop.flyX = prop.homeX;
+          prop.flyY = prop.homeY;
+          prop.vx = 0;
+          prop.vy = 0;
+          prop.spin = 0;
+        }
+
+        function updateWindDebris(delta, time) {
+          const windRadius = 420;
+          const timestamp = Date.now() + serverTimeOffset;
+
+          for (const prop of debris) {
+            const propX = prop.airborne ? prop.flyX : prop.homeX;
+            const propY = prop.airborne ? prop.flyY : prop.homeY;
+            const threat = closestTornadoAt(propX, propY, timestamp);
+            const warningRadius = threat?.storm.warning_radius || windRadius;
+            const intensity = threat?.storm.intensity || 0;
+
+            if (!prop.airborne) {
+              const strength = threat && threat.distance < warningRadius
+                ? (1 - threat.distance / warningRadius) * (0.65 + intensity * 0.12)
+                : 0;
+              prop.sway = Math.sin(time * 0.018 + prop.windSeed) * strength * 0.24;
+              if (!strength) {
+                prop.windExposure = Math.max(0, prop.windExposure - delta * 1.5);
+                continue;
+              }
+
+              prop.windExposure += delta * strength;
+              if (prop.windExposure < 0.3 || Math.random() > delta * 0.9) continue;
+
+              prop.airborne = true;
+              prop.thrown = false;
+              prop.airTime = 0;
+              prop.flyX = prop.homeX;
+              prop.flyY = prop.homeY;
+              prop.rotation = Math.random() * Math.PI * 2;
+              prop.spin = (Math.random() < 0.5 ? -1 : 1) * (5 + Math.random() * 7);
+              prop.vx = -Math.sin(prop.rotation) * 44;
+              prop.vy = Math.cos(prop.rotation) * 44;
+            }
+
+            prop.airTime += delta;
+            const currentThreat = closestTornadoAt(prop.flyX, prop.flyY, timestamp);
+            const currentWarningRadius = currentThreat?.storm.warning_radius || windRadius;
+            const currentIntensity = currentThreat?.storm.intensity || 0;
+            if (!prop.thrown && currentThreat && currentThreat.distance < currentWarningRadius + 120) {
+              const dx = prop.flyX - currentThreat.x;
+              const dy = prop.flyY - currentThreat.y;
+              const distance = Math.max(1, Math.hypot(dx, dy));
+              const windStrength = 1 - Math.min(1, distance / (currentWarningRadius + 120));
+              prop.vx += (-dy / distance * prop.spin - dx / distance * 34) * windStrength * delta;
+              prop.vy += (dx / distance * prop.spin - dy / distance * 34) * windStrength * delta;
+            }
+
+            if (!prop.thrown && prop.airTime > 0.85) {
+              const dx = currentThreat ? prop.flyX - currentThreat.x : prop.vx;
+              const dy = currentThreat ? prop.flyY - currentThreat.y : prop.vy;
+              const distance = Math.max(1, Math.hypot(dx, dy));
+              const throwSpeed = 140 + currentIntensity * 25 + Math.random() * 70;
+              prop.vx = dx / distance * throwSpeed;
+              prop.vy = dy / distance * throwSpeed;
+              prop.thrown = true;
+            }
+
+            prop.rotation += prop.spin * delta;
+            if (prop.thrown) {
+              const drag = Math.exp(-0.55 * delta);
+              prop.vx *= drag;
+              prop.vy *= drag;
+            }
+            prop.flyX += prop.vx * delta;
+            prop.flyY += prop.vy * delta;
+
+            if (prop.thrown && prop.airTime > 0.25) {
+              const playerDistance = Math.hypot(prop.flyX - player.x, prop.flyY - player.y);
+              if (!player.vehicleId && playerDistance < 22 && time >= nextDebrisDamageAt) {
+                damagePlayer(prop.kind === 'tree' ? 20 : 12);
+                nextDebrisDamageAt = time + 850;
+              }
+              if (truck && time >= truck.lastDebrisAt && Math.hypot(prop.flyX - truck.x, prop.flyY - truck.y) < 28) {
+                truck.health = Math.max(0, truck.health - (prop.kind === 'tree' ? 24 : 13));
+                truck.lastDebrisAt = time + 900;
+                prop.vx *= -0.45;
+                prop.vy *= -0.45;
+                publishPresence(true);
+              }
+            }
+
+            if (prop.airTime > 3.4 || prop.flyX < 0 || prop.flyY < 0 || prop.flyX > world.width || prop.flyY > world.height) {
+              resetDebris(prop);
+            }
+          }
+        }
 
         function resize() {
           const bounds = canvas.getBoundingClientRect();
@@ -445,7 +1163,9 @@
             const screenX = tree.x - cameraX;
             const screenY = tree.y - cameraY;
             if (screenX < -tree.size * 2 || screenY < -tree.size * 2 || screenX > width + tree.size * 2 || screenY > height + tree.size * 2) continue;
+            if (tree.airborne) continue;
             const green = tree.tone > 0.5 ? '#5d814a' : '#6a8d50';
+            const sway = Math.sin(tree.sway) * tree.size * 0.16;
             ctx.fillStyle = 'rgb(45 60 36 / 13%)';
             ctx.beginPath();
             ctx.ellipse(tree.x + 3, tree.y + tree.size * 0.7, tree.size * 0.86, tree.size * 0.38, 0, 0, Math.PI * 2);
@@ -454,13 +1174,27 @@
             ctx.fillRect(tree.x - 2, tree.y + tree.size * 0.22, 4, tree.size * 0.55);
             ctx.fillStyle = green;
             ctx.beginPath();
-            ctx.arc(tree.x, tree.y, tree.size * 0.72, 0, Math.PI * 2);
-            ctx.arc(tree.x - tree.size * 0.38, tree.y + tree.size * 0.09, tree.size * 0.52, 0, Math.PI * 2);
-            ctx.arc(tree.x + tree.size * 0.38, tree.y + tree.size * 0.13, tree.size * 0.54, 0, Math.PI * 2);
+            ctx.arc(tree.x + sway, tree.y - sway * 0.25, tree.size * 0.72, 0, Math.PI * 2);
+            ctx.arc(tree.x - tree.size * 0.38 + sway, tree.y + tree.size * 0.09, tree.size * 0.52, 0, Math.PI * 2);
+            ctx.arc(tree.x + tree.size * 0.38 + sway, tree.y + tree.size * 0.13, tree.size * 0.54, 0, Math.PI * 2);
             ctx.fill();
             ctx.fillStyle = 'rgb(223 234 174 / 20%)';
             ctx.beginPath();
-            ctx.arc(tree.x - tree.size * 0.2, tree.y - tree.size * 0.22, tree.size * 0.18, 0, Math.PI * 2);
+            ctx.arc(tree.x - tree.size * 0.2 + sway, tree.y - tree.size * 0.22, tree.size * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          for (const bush of bushes) {
+            if (bush.airborne) continue;
+            const screenX = bush.x - cameraX;
+            const screenY = bush.y - cameraY;
+            if (screenX < -bush.size * 2 || screenY < -bush.size * 2 || screenX > width + bush.size * 2 || screenY > height + bush.size * 2) continue;
+            const sway = Math.sin(bush.sway) * bush.size * 0.22;
+            ctx.fillStyle = bush.tone > 0.5 ? '#60814d' : '#708d53';
+            ctx.beginPath();
+            ctx.arc(bush.x + sway, bush.y, bush.size * 0.72, 0, Math.PI * 2);
+            ctx.arc(bush.x - bush.size * 0.42 + sway, bush.y + 2, bush.size * 0.5, 0, Math.PI * 2);
+            ctx.arc(bush.x + bush.size * 0.42 + sway, bush.y + 1, bush.size * 0.53, 0, Math.PI * 2);
             ctx.fill();
           }
 
@@ -500,6 +1234,38 @@
             ctx.fill();
           }
 
+          for (const prop of debris) {
+            if (!prop.airborne) continue;
+            const screenX = prop.flyX - cameraX;
+            const screenY = prop.flyY - cameraY;
+            if (screenX < -prop.size * 2 || screenY < -prop.size * 2 || screenX > width + prop.size * 2 || screenY > height + prop.size * 2) continue;
+            ctx.save();
+            ctx.translate(prop.flyX, prop.flyY);
+            ctx.rotate(prop.rotation);
+            ctx.fillStyle = 'rgb(39 45 34 / 22%)';
+            ctx.beginPath();
+            ctx.ellipse(4, prop.size * 0.55, prop.size * 0.72, prop.size * 0.28, 0, 0, Math.PI * 2);
+            ctx.fill();
+            if (prop.kind === 'tree') {
+              ctx.fillStyle = '#806849';
+              ctx.fillRect(-2, -prop.size * 0.1, 4, prop.size * 0.8);
+              ctx.fillStyle = prop.tone > 0.5 ? '#5d814a' : '#6a8d50';
+              ctx.beginPath();
+              ctx.arc(0, -prop.size * 0.2, prop.size * 0.72, 0, Math.PI * 2);
+              ctx.arc(-prop.size * 0.3, -prop.size * 0.05, prop.size * 0.48, 0, Math.PI * 2);
+              ctx.arc(prop.size * 0.3, -prop.size * 0.03, prop.size * 0.5, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              ctx.fillStyle = prop.tone > 0.5 ? '#60814d' : '#708d53';
+              ctx.beginPath();
+              ctx.arc(0, 0, prop.size * 0.72, 0, Math.PI * 2);
+              ctx.arc(-prop.size * 0.45, 2, prop.size * 0.5, 0, Math.PI * 2);
+              ctx.arc(prop.size * 0.45, 1, prop.size * 0.52, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+
           ctx.strokeStyle = '#627b47';
           ctx.lineWidth = 10;
           ctx.strokeRect(4, 4, world.width - 8, world.height - 8);
@@ -508,8 +1274,10 @@
           ctx.strokeRect(10, 10, world.width - 20, world.height - 20);
         }
 
-        function drawPlayer(screenX, screenY, time) {
-          const moving = !paused && (held.up || held.down || held.left || held.right);
+        function drawPlayer(entity, screenX, screenY, time, isLocal = false) {
+          const moving = isLocal
+            ? !paused && (held.up || held.down || held.left || held.right)
+            : entity.moving;
           const bob = moving ? Math.sin(time * 0.013) * 1.7 : 0;
           const stride = moving ? Math.sin(time * 0.017) * 3 : 0;
 
@@ -526,7 +1294,7 @@
           ctx.ellipse(4 - stride * 0.48, 9, 3, 4, 0.12, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.fillStyle = '#557d59';
+          ctx.fillStyle = entity.color;
           ctx.beginPath();
           ctx.ellipse(0, 2, 7.7, 9, 0, 0, Math.PI * 2);
           ctx.fill();
@@ -546,11 +1314,11 @@
 
           ctx.fillStyle = '#e8f0ce';
           ctx.beginPath();
-          if (player.facing === 'up') {
+          if (entity.facing === 'up') {
             ctx.ellipse(0, -3, 3, 1.2, 0, 0, Math.PI * 2);
-          } else if (player.facing === 'left') {
+          } else if (entity.facing === 'left') {
             ctx.arc(-3.3, -6.3, 1.05, 0, Math.PI * 2);
-          } else if (player.facing === 'right') {
+          } else if (entity.facing === 'right') {
             ctx.arc(3.3, -6.3, 1.05, 0, Math.PI * 2);
           } else {
             ctx.ellipse(-2, -6, 0.75, 1, 0, 0, Math.PI * 2);
@@ -558,6 +1326,73 @@
           }
           ctx.fill();
           ctx.restore();
+
+          ctx.font = '11px DM Sans, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = 'rgb(40 55 37 / 78%)';
+          ctx.strokeText(entity.name, screenX, screenY - 18);
+          ctx.fillStyle = '#fff8e3';
+          ctx.fillText(entity.name, screenX, screenY - 18);
+        }
+
+        function drawPickup(vehicle, time) {
+          ctx.save();
+          ctx.translate(vehicle.x, vehicle.y);
+          ctx.rotate(vehicle.heading);
+          if (vehicle.airborne) ctx.translate(0, -12 - Math.sin(time * 0.012) * 5);
+          ctx.fillStyle = 'rgb(38 48 35 / 24%)';
+          ctx.beginPath();
+          ctx.ellipse(3, 12, 27, 10, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#303a34';
+          for (const wheelX of [-15, 16]) {
+            for (const wheelY of [-12, 12]) {
+              ctx.beginPath();
+              ctx.roundRect(wheelX - 4, wheelY - 3, 8, 6, 2);
+              ctx.fill();
+            }
+          }
+          ctx.fillStyle = vehicle.healthRatio <= 0.5 ? '#766654' : '#a95d42';
+          ctx.beginPath();
+          ctx.roundRect(-25, -10, 50, 20, 4);
+          ctx.fill();
+          ctx.fillStyle = '#774b38';
+          ctx.fillRect(-22, -7, 17, 14);
+          ctx.fillStyle = '#9bb4b1';
+          ctx.beginPath();
+          ctx.roundRect(-3, -8, 14, 16, 3);
+          ctx.fill();
+          ctx.fillStyle = '#dbbb7c';
+          ctx.fillRect(21, -6, 3, 4);
+          ctx.fillRect(21, 2, 3, 4);
+          if (vehicle.healthRatio <= 0.5) {
+            ctx.strokeStyle = '#342f2a';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(5, -3);
+            ctx.lineTo(10, 1);
+            ctx.lineTo(5, 5);
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          const occupants = getVehicleOccupants(vehicle);
+          if (occupants.length) {
+            ctx.font = '9px DM Mono, monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.lineWidth = 3;
+            occupants.forEach((occupant, index) => {
+              const label = `${occupant.role} · ${occupant.name}`;
+              const labelY = vehicle.y - 22 - (occupants.length - index - 1) * 12;
+              ctx.strokeStyle = 'rgb(40 55 37 / 82%)';
+              ctx.strokeText(label, vehicle.x, labelY);
+              ctx.fillStyle = '#fff8e3';
+              ctx.fillText(label, vehicle.x, labelY);
+            });
+          }
         }
 
         function drawMinimap() {
@@ -577,6 +1412,38 @@
             mapCtx.arc(tree.x / world.width * map.width, tree.y / world.height * map.height, 1.6, 0, Math.PI * 2);
             mapCtx.fill();
           }
+          for (const other of remotePlayers.values()) {
+            mapCtx.fillStyle = other.color;
+            mapCtx.beginPath();
+            mapCtx.arc(other.x / world.width * map.width, other.y / world.height * map.height, 4, 0, Math.PI * 2);
+            mapCtx.fill();
+          }
+          for (const storm of tornadoes) {
+            const position = getTornadoPosition(storm);
+            const scaleX = map.width / world.width;
+            const scaleY = map.height / world.height;
+            const warningRadius = storm.warning_radius || 420;
+            const lethalRadius = storm.lethal_radius || 118;
+            mapCtx.fillStyle = 'rgb(235 206 128 / 12%)';
+            mapCtx.beginPath();
+            mapCtx.ellipse(position.x * scaleX, position.y * scaleY, warningRadius * scaleX, warningRadius * scaleY, 0, 0, Math.PI * 2);
+            mapCtx.fill();
+            mapCtx.strokeStyle = 'rgb(235 206 128 / 58%)';
+            mapCtx.lineWidth = 1;
+            mapCtx.setLineDash([3, 3]);
+            mapCtx.beginPath();
+            mapCtx.ellipse(position.x * scaleX, position.y * scaleY, warningRadius * scaleX, warningRadius * scaleY, 0, 0, Math.PI * 2);
+            mapCtx.stroke();
+            mapCtx.setLineDash([]);
+            mapCtx.fillStyle = 'rgb(164 78 63 / 22%)';
+            mapCtx.beginPath();
+            mapCtx.ellipse(position.x * scaleX, position.y * scaleY, lethalRadius * scaleX, lethalRadius * scaleY, 0, 0, Math.PI * 2);
+            mapCtx.fill();
+            mapCtx.fillStyle = '#a44e3f';
+            mapCtx.beginPath();
+            mapCtx.arc(position.x * scaleX, position.y * scaleY, 4, 0, Math.PI * 2);
+            mapCtx.fill();
+          }
           mapCtx.fillStyle = '#fff8d8';
           mapCtx.beginPath();
           mapCtx.arc(player.x / world.width * map.width, player.y / world.height * map.height, 5, 0, Math.PI * 2);
@@ -586,27 +1453,772 @@
           mapCtx.stroke();
         }
 
+        function drawWeatherRadar() {
+          const mapWidth = radarCanvas.width;
+          const mapHeight = radarCanvas.height;
+          radarCtx.clearRect(0, 0, mapWidth, mapHeight);
+          radarCtx.fillStyle = '#85ae60';
+          radarCtx.fillRect(0, 0, mapWidth, mapHeight);
+          radarCtx.strokeStyle = 'rgb(55 91 56 / 18%)';
+          radarCtx.lineWidth = 1;
+          for (let x = 0; x <= mapWidth; x += 40) {
+            radarCtx.beginPath();
+            radarCtx.moveTo(x, 0);
+            radarCtx.lineTo(x, mapHeight);
+            radarCtx.stroke();
+          }
+          for (let y = 0; y <= mapHeight; y += 40) {
+            radarCtx.beginPath();
+            radarCtx.moveTo(0, y);
+            radarCtx.lineTo(mapWidth, y);
+            radarCtx.stroke();
+          }
+
+          for (const storm of tornadoes) {
+            const current = getTornadoPosition(storm);
+            const tenMinutes = predictTornadoPosition(storm, 10);
+            const twentyMinutes = predictTornadoPosition(storm, 20);
+            const scaleX = mapWidth / world.width;
+            const scaleY = mapHeight / world.height;
+            const currentX = current.x * scaleX;
+            const currentY = current.y * scaleY;
+            radarCtx.strokeStyle = 'rgb(164 78 63 / 62%)';
+            radarCtx.lineWidth = 2;
+            radarCtx.setLineDash([4, 4]);
+            radarCtx.beginPath();
+            radarCtx.moveTo(currentX, currentY);
+            radarCtx.lineTo(twentyMinutes.x * scaleX, twentyMinutes.y * scaleY);
+            radarCtx.stroke();
+            radarCtx.setLineDash([]);
+            radarCtx.fillStyle = '#e9c17a';
+            radarCtx.beginPath();
+            radarCtx.arc(tenMinutes.x * scaleX, tenMinutes.y * scaleY, 4, 0, Math.PI * 2);
+            radarCtx.fill();
+            radarCtx.fillStyle = '#a44e3f';
+            radarCtx.beginPath();
+            radarCtx.arc(currentX, currentY, 6, 0, Math.PI * 2);
+            radarCtx.fill();
+          }
+          radarCtx.fillStyle = '#fff8d8';
+          radarCtx.beginPath();
+          radarCtx.arc(player.x / world.width * mapWidth, player.y / world.height * mapHeight, 4, 0, Math.PI * 2);
+          radarCtx.fill();
+        }
+
+        function updateWeatherView() {
+          const time = gameTimeAt();
+          const count = tornadoes.length;
+          radarStatus.textContent = radarReady
+            ? `${count} TRACKED · ${time.label} ${time.night ? 'NIGHT' : 'DAYLIGHT'} · ESTIMATES`
+            : 'RADAR OFFLINE · APPLY SUPABASE MIGRATION';
+          drawWeatherRadar();
+          forecastList.replaceChildren();
+
+          if (!radarReady || count === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'forecast-item';
+            const message = document.createElement('strong');
+            message.textContent = radarReady ? 'No active tornadoes detected' : 'No server forecast available';
+            empty.append(message);
+            forecastList.append(empty);
+            return;
+          }
+
+          tornadoes.forEach((storm, index) => {
+            const tenMinutes = predictTornadoPosition(storm, 10);
+            const twentyMinutes = predictTornadoPosition(storm, 20);
+            const item = document.createElement('div');
+            item.className = 'forecast-item';
+            const title = document.createElement('strong');
+            title.textContent = `${storm.ef_rating || `EF${storm.intensity || 0}`} · TORNADO ${String(index + 1).padStart(2, '0')}`;
+            const detail = document.createElement('span');
+            detail.textContent = `${storm.wind_speed_mph || '--'} MPH · PAYOUT $${storm.contract_reward || 100} · +10M X ${Math.round(tenMinutes.x)} / Y ${Math.round(tenMinutes.y)} · +20M X ${Math.round(twentyMinutes.x)} / Y ${Math.round(twentyMinutes.y)}`;
+            item.append(title, detail);
+            forecastList.append(item);
+          });
+        }
+
+        function currentContractStorm() {
+          if (contractStormId) {
+            const tracked = tornadoes.find(storm => storm.id === contractStormId);
+            if (tracked && !completedContracts.has(tracked.id)) return tracked;
+          }
+          contractStormId = null;
+          const candidates = tornadoes
+            .filter(storm => !completedContracts.has(storm.id))
+            .map(storm => ({
+              storm,
+              distance: Math.hypot(
+                getTornadoPosition(storm).x - player.x,
+                getTornadoPosition(storm).y - player.y
+              )
+            }))
+            .sort((first, second) => first.distance - second.distance);
+          contractStormId = candidates[0]?.storm.id ?? null;
+          contractProgressSeconds = 0;
+          return candidates[0]?.storm ?? null;
+        }
+
+        function updateContractView() {
+          contractBalance.textContent = `AVAILABLE FUNDS · $${Math.floor(wallet).toLocaleString()}`;
+          if (!radarReady) {
+            contractTargetLabel.textContent = 'NO TRACK';
+            contractProgressLabel.textContent = 'Waiting for server radar';
+            contractProgress.value = 0;
+            contractReward.textContent = 'PAYOUT · --';
+            return;
+          }
+
+          const storm = currentContractStorm();
+          if (!storm) {
+            contractTargetLabel.textContent = 'COMPLETE';
+            contractProgressLabel.textContent = 'All current contracts complete';
+            contractProgress.value = contractProgress.max;
+            contractReward.textContent = contractNotice && performance.now() < contractNoticeUntil
+              ? contractNotice
+              : 'NO ACTIVE TRACKS';
+            return;
+          }
+
+          const distance = Math.hypot(
+            getTornadoPosition(storm).x - player.x,
+            getTornadoPosition(storm).y - player.y
+          );
+          const safeInner = (storm.lethal_radius || 118) + 80;
+          const safeOuter = Math.max(safeInner + 40, (storm.warning_radius || 420) - 80);
+          const inSafeBand = distance >= safeInner && distance <= safeOuter;
+          contractTitle.textContent = `${storm.ef_rating || `EF${storm.intensity || 0}`} · SAFE-DISTANCE OBSERVATION`;
+          contractDescription.textContent = `Stay ${Math.round(safeInner)}–${Math.round(safeOuter)} units from this tornado for 20 seconds. Leave the band or enter a vehicle and progress resets.`;
+          contractProgress.max = 20;
+          contractProgress.value = contractProgressSeconds;
+          contractProgressLabel.textContent = player.vehicleId
+            ? 'Exit the vehicle to observe'
+            : inSafeBand ? `${Math.floor(contractProgressSeconds)} / 20 seconds` : 'Move into the safe band';
+          contractTargetLabel.textContent = storm.ef_rating || `EF${storm.intensity || 0}`;
+          contractReward.textContent = contractNotice && performance.now() < contractNoticeUntil
+            ? contractNotice
+            : `PAYOUT · $${storm.contract_reward || 100}`;
+        }
+
+        function advanceContract(delta) {
+          const storm = currentContractStorm();
+          if (!gameStarted || paused || dead || player.vehicleId || !storm) {
+            if (phoneOpen && phoneApp === 'contracts') updateContractView();
+            return;
+          }
+
+          const position = getTornadoPosition(storm);
+          const distance = Math.hypot(position.x - player.x, position.y - player.y);
+          const safeInner = (storm.lethal_radius || 118) + 80;
+          const safeOuter = Math.max(safeInner + 40, (storm.warning_radius || 420) - 80);
+          if (distance >= safeInner && distance <= safeOuter) {
+            contractProgressSeconds += delta;
+          } else {
+            contractProgressSeconds = 0;
+          }
+
+          if (contractProgressSeconds >= 20) {
+            const reward = Math.max(100, Number(storm.contract_reward) || 100);
+            wallet += reward;
+            localStorage.setItem('stormwatch-wallet', String(wallet));
+            completedContracts.add(storm.id);
+            contractNotice = `CONTRACT COMPLETE · +$${reward}`;
+            contractNoticeUntil = performance.now() + 5000;
+            contractStormId = null;
+            contractProgressSeconds = 0;
+          }
+
+          if (phoneOpen && phoneApp === 'contracts') updateContractView();
+        }
+
+        function appendChatMessage(name, text) {
+          const message = document.createElement('div');
+          message.className = 'chat-message';
+          const sender = document.createElement('strong');
+          sender.textContent = String(name || 'Chaser').slice(0, 16);
+          const body = document.createElement('span');
+          body.textContent = String(text || '').slice(0, 180);
+          message.append(sender, body);
+          chatLog.append(message);
+          while (chatLog.children.length > 60) chatLog.firstElementChild.remove();
+          chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        async function refreshTornadoes() {
+          if (!multiplayerReady || !supabaseClient || tornadoFetchInFlight) return;
+          tornadoFetchInFlight = true;
+          try {
+            const { data, error } = await supabaseClient.rpc('advance_meadow_tornadoes');
+            if (error) throw error;
+            const serverTimestamp = Date.parse(data?.server_time);
+            if (Number.isFinite(serverTimestamp)) serverTimeOffset = serverTimestamp - Date.now();
+            tornadoes = Array.isArray(data?.tornadoes)
+              ? data.tornadoes
+                .filter(storm => Number.isFinite(storm.x) && Number.isFinite(storm.y) &&
+                  Number.isFinite(storm.heading) && Number.isFinite(storm.speed))
+                .map(storm => {
+                  const intensity = Number.isFinite(storm.intensity)
+                    ? Math.max(0, Math.min(5, Math.floor(storm.intensity)))
+                    : 0;
+                  return {
+                    ...storm,
+                    intensity,
+                    ef_rating: storm.ef_rating || `EF${intensity}`,
+                    wind_speed_mph: Number.isFinite(storm.wind_speed_mph) ? storm.wind_speed_mph : 65,
+                    warning_radius: Number.isFinite(storm.warning_radius) ? storm.warning_radius : 460 + intensity * 54,
+                    lethal_radius: Number.isFinite(storm.lethal_radius) ? storm.lethal_radius : 100 + intensity * 17,
+                    eye_radius: Number.isFinite(storm.eye_radius) ? storm.eye_radius : 25 + intensity * 7,
+                    contract_reward: Number.isFinite(storm.contract_reward) ? storm.contract_reward : 100 + intensity * intensity * 70
+                  };
+                })
+              : [];
+            radarReady = true;
+            nextTornadoFetch = performance.now() + 1800;
+            if (phoneOpen && phoneApp === 'weather') updateWeatherView();
+          } catch {
+            tornadoes = [];
+            radarReady = false;
+            nextTornadoFetch = performance.now() + 10_000;
+            radarStatus.textContent = 'RADAR OFFLINE · APPLY SUPABASE MIGRATION';
+          } finally {
+            tornadoFetchInFlight = false;
+          }
+        }
+
         function render(time) {
           const cameraX = Math.max(0, Math.min(world.width - width, player.x - width / 2));
           const cameraY = Math.max(0, Math.min(world.height - height, player.y - height / 2));
+          const threat = gameStarted && !paused && !dead ? closestTornadoAt(player.x, player.y) : null;
+          const lethalRadius = threat?.storm.lethal_radius || 118;
+          const warningRadius = threat?.storm.warning_radius || 460;
+          const shakeIntensity = threat && threat.distance < warningRadius
+            ? Math.min(1, (warningRadius - threat.distance) / (warningRadius - lethalRadius))
+            : 0;
+          const shakeAmount = shakeIntensity * 7;
           ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
           ctx.clearRect(0, 0, width, height);
           ctx.save();
+          if (shakeAmount > 0) {
+            ctx.translate((Math.random() - 0.5) * shakeAmount, (Math.random() - 0.5) * shakeAmount);
+          }
           ctx.translate(-cameraX, -cameraY);
           drawWorld(cameraX, cameraY);
-          drawPlayer(player.x, player.y, time);
+          const serverNow = Date.now() + serverTimeOffset;
+          for (const storm of tornadoes) drawTornado(storm, serverNow);
+          for (const vehicle of getVehicles()) drawPickup(vehicle, time);
+          const actors = [...remotePlayers.values(), player]
+            .filter(actor => !actor.vehicleId)
+            .sort((first, second) => first.y - second.y);
+          for (const actor of actors) {
+            drawPlayer(actor, actor.x, actor.y, time, actor === player);
+          }
           ctx.restore();
+          const gameTime = gameTimeAt(serverNow);
+          if (gameTime.darkness > 0) {
+            ctx.fillStyle = `rgb(22 32 55 / ${gameTime.darkness})`;
+            ctx.fillRect(0, 0, width, height);
+          }
           drawMinimap();
 
           if (time - coordinateRefresh > 120) {
             coordinates.value = `X ${String(Math.round(player.x)).padStart(4, '0')} · Y ${String(Math.round(player.y)).padStart(4, '0')}`;
             coordinateRefresh = time;
           }
+          if (time - clockRefresh > 500) {
+            const state = `${gameTime.label} · ${gameTime.night ? 'NIGHT' : 'DAYLIGHT'}`;
+            gameClock.value = state;
+            phoneStatus.textContent = state;
+            clockRefresh = time;
+          }
+          if (phoneOpen && phoneApp === 'weather' && time - weatherRefresh > 1000) {
+            updateWeatherView();
+            weatherRefresh = time;
+          }
+          if (time - vehicleUiRefresh > 150) {
+            updateVehicleDashboard();
+            playerHealthLabel.textContent = `HEALTH · ${Math.ceil(player.health)}%`;
+            playerHealthFill.style.width = `${Math.max(0, player.health)}%`;
+            if (phoneOpen && phoneApp === 'contracts') updateContractView();
+            if (phoneOpen && phoneApp === 'vehicle') updateVehicleApp();
+            vehicleUiRefresh = time;
+          }
+        }
+
+        function setPhoneApp(view) {
+          phoneApp = view;
+          phoneHome.hidden = view !== 'home';
+          messagesView.hidden = view !== 'messages';
+          weatherView.hidden = view !== 'weather';
+          contractsView.hidden = view !== 'contracts';
+          vehicleView.hidden = view !== 'vehicle';
+          phoneHomeButton.hidden = view === 'home';
+          phoneViewTitle.textContent = view === 'home'
+            ? 'Field phone'
+            : ({ messages: 'Messages', weather: 'Weather radar', contracts: 'Contracts', vehicle: 'Vehicles' }[view] || 'Field phone');
+          if (view === 'messages') chatInput.focus();
+          if (view === 'weather') updateWeatherView();
+          if (view === 'contracts') updateContractView();
+          if (view === 'vehicle') updateVehicleApp();
+        }
+
+        function togglePhone(open = !phoneOpen) {
+          if (!gameStarted || dead) return;
+          phoneOpen = open;
+          phonePanel.hidden = !phoneOpen;
+          phoneButton.setAttribute('aria-expanded', String(phoneOpen));
+          phoneButton.setAttribute('aria-label', phoneOpen ? 'Close phone' : 'Open phone');
+          phoneButton.title = phoneOpen ? 'Close phone' : 'Open phone';
+          if (phoneOpen) {
+            for (const direction of Object.keys(held)) held[direction] = false;
+            setPhoneApp('home');
+          }
+          publishPresence(true);
+        }
+
+        function killPlayer() {
+          if (dead) return;
+          dead = true;
+          if (truck?.driverId === player.id) {
+            truck.driverSeated = false;
+            truck.speed = 0;
+          }
+          player.vehicleId = null;
+          setPaused(true);
+          phonePanel.hidden = true;
+          phoneOpen = false;
+          phoneButton.setAttribute('aria-expanded', 'false');
+          deathScreen.hidden = false;
+          publishPresence(true);
+        }
+
+        function damagePlayer(amount) {
+          if (dead || amount <= 0) return;
+          player.health = Math.max(0, player.health - amount);
+          if (player.health <= 0) killPlayer();
+        }
+
+        function checkStormProximity(time) {
+          if (!gameStarted || paused || dead || !radarReady) return;
+          for (const storm of tornadoes) {
+            const position = getTornadoPosition(storm);
+            const distance = Math.hypot(player.x - position.x, player.y - position.y);
+            if (distance < (storm.lethal_radius || 118) && time - lastStormDamageAt >= 1000) {
+              damagePlayer(2 + (storm.intensity || 0) * 3);
+              lastStormDamageAt = time;
+            }
+          }
+        }
+
+        function updateVehiclePhysics(delta, time) {
+          const ridden = getRiddenVehicle();
+          if (!ridden) {
+            if (player.vehicleId) player.vehicleId = null;
+            return;
+          }
+          if (!truck || ridden.id !== truck.id || truck.driverId !== player.id) {
+            player.x = ridden.x;
+            player.y = ridden.y;
+            return;
+          }
+
+          if (truck.airborne) {
+            truck.x += truckVelocityX * delta;
+            truck.y += truckVelocityY * delta;
+            truckVelocityX *= Math.exp(-0.28 * delta);
+            truckVelocityY *= Math.exp(-0.28 * delta);
+            player.x = truck.x;
+            player.y = truck.y;
+            if (time >= truckFlingUntil) {
+              truck.airborne = false;
+              const storm = tornadoes.find(candidate => candidate.id === truck.eyeStormId);
+              truck.health = Math.max(0, truck.health - 8 - (storm?.intensity || 0) * 5);
+              damagePlayer(10 + (storm?.intensity || 0) * 8);
+              publishPresence(true);
+            }
+            return;
+          }
+
+          const forwardInput = Number(held.up) - Number(held.down);
+          const steeringInput = Number(held.right) - Number(held.left);
+          const threat = closestTornadoAt(truck.x, truck.y);
+          const warningRadius = threat?.storm.warning_radius || 460;
+          const proximity = threat && threat.distance < warningRadius
+            ? 1 - threat.distance / warningRadius
+            : 0;
+          const intensity = threat?.storm.intensity || 0;
+          const windLoad = proximity * (0.35 + intensity * 0.13);
+          const traction = Math.max(0.22, 1 - windLoad * 0.65);
+          const healthRatio = Math.max(0, truck.health / 100);
+          const maximumSpeed = 260 * Math.pow(healthRatio, 1.5) * Math.max(0.3, 1 - windLoad * 0.4);
+
+          truck.speed += forwardInput * 220 * delta;
+          truck.speed = forwardInput
+            ? truck.speed * Math.exp(-0.18 * delta)
+            : truck.speed * Math.exp(-1.5 * delta);
+          truck.speed = Math.max(-maximumSpeed * 0.45, Math.min(maximumSpeed, truck.speed));
+          truck.heading += steeringInput * delta * (1.4 + Math.abs(truck.speed) / 95) * traction;
+          const targetVelocityX = Math.cos(truck.heading) * truck.speed;
+          const targetVelocityY = Math.sin(truck.heading) * truck.speed;
+          const grip = 1 - Math.exp(-5 * traction * delta);
+          truckVelocityX += (targetVelocityX - truckVelocityX) * grip;
+          truckVelocityY += (targetVelocityY - truckVelocityY) * grip;
+          if (windLoad > 0.18 && Math.random() < windLoad * delta * 1.5) {
+            truckVelocityX += (Math.random() - 0.5) * windLoad * 110;
+            truckVelocityY += (Math.random() - 0.5) * windLoad * 110;
+          }
+          truck.x = Math.max(24, Math.min(world.width - 24, truck.x + truckVelocityX * delta));
+          truck.y = Math.max(24, Math.min(world.height - 24, truck.y + truckVelocityY * delta));
+          if (Math.abs(truck.speed) > 2) truck.heading = Math.atan2(truckVelocityY, truckVelocityX);
+          player.x = truck.x;
+          player.y = truck.y;
+          publishPresence();
+
+          if (threat && proximity > 0 && time - truck.lastDamageAt >= 1000) {
+            truck.health = Math.max(0, truck.health - (1 + intensity * 2.4) * proximity);
+            truck.lastDamageAt = time;
+            publishPresence(true);
+          }
+
+          if (threat && threat.distance <= (threat.storm.eye_radius || 25) && truck.eyeStormId !== threat.storm.id) {
+            truck.eyeStormId = threat.storm.id;
+            truck.airborne = true;
+            truckFlingUntil = time + 1800;
+            const dx = truck.x - threat.x;
+            const dy = truck.y - threat.y;
+            const distance = Math.max(1, Math.hypot(dx, dy));
+            const flingSpeed = 190 + intensity * 44;
+            truckVelocityX = dx / distance * flingSpeed;
+            truckVelocityY = dy / distance * flingSpeed;
+            truck.health = Math.max(0, truck.health - 24 - intensity * 9);
+            damagePlayer(20 + intensity * 12);
+            publishPresence(true);
+          } else if (truck.eyeStormId && (!threat || threat.storm.id !== truck.eyeStormId || threat.distance > (threat.storm.eye_radius || 25) * 2)) {
+            truck.eyeStormId = null;
+          }
+        }
+
+        function respawnPlayer() {
+          Object.assign(player, randomSpawn(
+            [...remotePlayers.values()],
+            tornadoes
+          ));
+          player.facing = 'down';
+          player.health = 100;
+          player.vehicleId = null;
+          dead = false;
+          deathScreen.hidden = true;
+          setPaused(false);
+          publishPresence(true);
+        }
+
+        async function sendChatMessage(event) {
+          event.preventDefault();
+          const text = chatInput.value.trim().slice(0, 180);
+          if (!text) return;
+          if (!multiplayerReady || !realtimeChannel) {
+            chatStatus.textContent = 'Chat is offline until the field network connects.';
+            return;
+          }
+          chatStatus.textContent = 'Sending…';
+          try {
+            const status = await realtimeChannel.send({
+              type: 'broadcast',
+              event: 'chat',
+              payload: { name: player.name, text, sentAt: Date.now() }
+            });
+            if (status !== 'ok') throw new Error('Chat broadcast failed');
+            appendChatMessage(player.name, text);
+            chatInput.value = '';
+            chatStatus.textContent = 'Global room · messages are temporary';
+          } catch {
+            chatStatus.textContent = 'Message not sent. Check the field network.';
+          }
+        }
+
+        function updateConnectionStatus() {
+          connectionStatus.textContent = `ONLINE · ${remotePlayers.size + 1}`;
+        }
+
+        function publishPresence(force = false) {
+          if (!multiplayerReady || !realtimeChannel) return;
+          const now = performance.now();
+          if (!force && now - lastPresenceSent < 120) return;
+          lastPresenceSent = now;
+          realtimeChannel.track({
+            id: player.id,
+            name: player.name,
+            color: player.color,
+            x: player.x,
+            y: player.y,
+            facing: player.facing,
+            moving: !paused && (held.up || held.down || held.left || held.right),
+            vehicleId: player.vehicleId,
+            truck: truck ? {
+              id: truck.id,
+              driverId: truck.driverId,
+              driverName: truck.driverName,
+              x: truck.x,
+              y: truck.y,
+              heading: truck.heading,
+              speed: truck.speed,
+              healthRatio: truck.health / 100,
+              driverSeated: truck.driverSeated,
+              airborne: truck.airborne,
+              flungUntil: truck.flungUntil || 0
+            } : null
+          }).then(result => {
+            if (result !== 'ok') connectionStatus.textContent = 'LOCAL · OFFLINE';
+          }).catch(() => {
+            connectionStatus.textContent = 'LOCAL · OFFLINE';
+          });
+        }
+
+        function syncRemotePlayers() {
+          remotePlayers.clear();
+          const presence = realtimeChannel.presenceState();
+          for (const sessions of Object.values(presence)) {
+            for (const peer of sessions) {
+              if (peer.id === player.id || !Number.isFinite(peer.x) || !Number.isFinite(peer.y)) continue;
+              remotePlayers.set(peer.id, {
+                id: peer.id,
+                name: String(peer.name || 'Wanderer').slice(0, 20),
+                color: colors.includes(peer.color) ? peer.color : colors[0],
+                x: Math.max(24, Math.min(world.width - 24, peer.x)),
+                y: Math.max(24, Math.min(world.height - 24, peer.y)),
+                facing: ['up', 'down', 'left', 'right'].includes(peer.facing) ? peer.facing : 'down',
+                moving: peer.moving === true,
+                vehicleId: typeof peer.vehicleId === 'string' ? peer.vehicleId : null,
+                vehicle: peer.truck && typeof peer.truck.id === 'string' &&
+                  Number.isFinite(peer.truck.x) && Number.isFinite(peer.truck.y)
+                  ? {
+                    id: peer.truck.id,
+                    driverId: peer.truck.driverId,
+                    driverName: String(peer.truck.driverName || 'Chaser').slice(0, 16),
+                    x: Math.max(24, Math.min(world.width - 24, peer.truck.x)),
+                    y: Math.max(24, Math.min(world.height - 24, peer.truck.y)),
+                    heading: Number.isFinite(peer.truck.heading) ? peer.truck.heading : 0,
+                    speed: Number.isFinite(peer.truck.speed) ? peer.truck.speed : 0,
+                    healthRatio: Math.max(0, Math.min(1, Number(peer.truck.healthRatio) || 0)),
+                    driverSeated: peer.truck.driverSeated === true,
+                    airborne: peer.truck.airborne === true,
+                    flungUntil: Number(peer.truck.flungUntil) || 0
+                  }
+                  : null
+              });
+            }
+          }
+
+          if (firstPresenceSync) {
+            firstPresenceSync = false;
+            if (remotePlayers.size > 0) {
+              Object.assign(player, randomSpawn([...remotePlayers.values()]));
+              publishPresence(true);
+            }
+          }
+          updateConnectionStatus();
+        }
+
+        function getVehicles() {
+          const vehicles = [];
+          if (truck) vehicles.push(truck);
+          const known = new Set(vehicles.map(vehicle => vehicle.id));
+          for (const peer of remotePlayers.values()) {
+            if (peer.vehicle && !known.has(peer.vehicle.id)) {
+              vehicles.push(peer.vehicle);
+              known.add(peer.vehicle.id);
+            }
+          }
+          return vehicles;
+        }
+
+        function getVehicleOccupants(vehicle) {
+          const occupants = [];
+          if (vehicle.driverSeated) occupants.push({ id: vehicle.driverId, name: vehicle.driverName, role: 'DRIVER' });
+          for (const peer of remotePlayers.values()) {
+            if (peer.vehicleId === vehicle.id && peer.id !== vehicle.driverId) {
+              occupants.push({ id: peer.id, name: peer.name, role: 'PASSENGER' });
+            }
+          }
+          if (player.vehicleId === vehicle.id && player.id !== vehicle.driverId) {
+            occupants.push({ id: player.id, name: player.name, role: 'PASSENGER' });
+          }
+          return occupants.slice(0, 2);
+        }
+
+        function getRiddenVehicle() {
+          return player.vehicleId ? getVehicles().find(vehicle => vehicle.id === player.vehicleId) || null : null;
+        }
+
+        function updateVehicleDashboard() {
+          const vehicle = getRiddenVehicle();
+          vehicleDashboard.hidden = !vehicle;
+          if (!vehicle) return;
+          const healthRatio = Number.isFinite(vehicle.healthRatio)
+            ? vehicle.healthRatio
+            : Math.max(0, Math.min(1, vehicle.health / 100));
+          vehicleSpeedDisplay.textContent = String(Math.round(Math.abs(vehicle.speed || 0) * 0.45)).padStart(3, '0');
+          engineWarning.classList.toggle('is-on', healthRatio < 0.5);
+          const occupants = getVehicleOccupants(vehicle);
+          const driver = occupants.find(occupant => occupant.role === 'DRIVER');
+          const passenger = occupants.find(occupant => occupant.role === 'PASSENGER');
+          vehicleOccupantsDisplay.textContent = `DRIVER · ${driver?.name || '--'}\nPASSENGER · ${passenger?.name || '--'}`;
+        }
+
+        function updateVehicleApp() {
+          const occupied = getRiddenVehicle();
+          const vehicles = getVehicles();
+          const nearby = vehicles
+            .filter(vehicle => Math.hypot(vehicle.x - player.x, vehicle.y - player.y) < 180)
+            .sort((first, second) => Math.hypot(first.x - player.x, first.y - player.y) - Math.hypot(second.x - player.x, second.y - player.y))
+            .find(vehicle => getVehicleOccupants(vehicle).length < 2);
+
+          if (occupied) {
+            const healthRatio = Number.isFinite(occupied.healthRatio)
+              ? occupied.healthRatio
+              : Math.max(0, Math.min(1, occupied.health / 100));
+            vehicleAppStatus.textContent = `Riding with ${occupied.driverName || 'your crew'} · ${getVehicleOccupants(occupied).length}/2 seats occupied.`;
+            vehicleAppDetail.textContent = healthRatio < 0.5 ? 'Engine warning active · reduced power.' : 'Storm wind and airborne debris can damage this pickup.';
+            vehicleActionButton.textContent = 'Exit pickup';
+            vehicleActionButton.disabled = false;
+          } else if (nearby) {
+            vehicleAppStatus.textContent = `${nearby.driverName || 'Field crew'}’s pickup is nearby · ${getVehicleOccupants(nearby).length}/2 seats.`;
+            vehicleAppDetail.textContent = 'Board the open seat. The driver controls the truck.';
+            vehicleActionButton.textContent = 'Enter pickup';
+            vehicleActionButton.disabled = false;
+          } else if (truck && truck.driverId === player.id) {
+            vehicleAppStatus.textContent = 'Your pickup is already in the field.';
+            vehicleAppDetail.textContent = 'Walk back to it to drive. You can only have one pickup at a time.';
+            vehicleActionButton.textContent = 'Pickup out of range';
+            vehicleActionButton.disabled = true;
+          } else {
+            vehicleAppStatus.textContent = 'No pickup nearby. Dispatch a two-seat truck.';
+            vehicleAppDetail.textContent = 'A pickup can carry you and one other chaser.';
+            vehicleActionButton.textContent = 'Summon pickup';
+            vehicleActionButton.disabled = false;
+          }
+        }
+
+        function setVehicleOccupancy(vehicle, seated) {
+          if (!vehicle) return;
+          if (vehicle.driverId === player.id) vehicle.driverSeated = seated;
+          player.vehicleId = seated ? vehicle.id : null;
+          if (!seated) {
+            player.x = Math.max(24, Math.min(world.width - 24, vehicle.x + 38));
+            player.y = Math.max(24, Math.min(world.height - 24, vehicle.y + 38));
+          } else {
+            player.x = vehicle.x;
+            player.y = vehicle.y;
+          }
+          publishPresence(true);
+          updateVehicleApp();
+        }
+
+        function summonPickup() {
+          if (truck || player.vehicleId) return;
+          truck = {
+            id: globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2),
+            driverId: player.id,
+            driverName: player.name,
+            x: player.x,
+            y: player.y,
+            heading: player.facing === 'up' ? -Math.PI / 2
+              : player.facing === 'down' ? Math.PI / 2
+                : player.facing === 'left' ? Math.PI : 0,
+            speed: 0,
+            health: 100,
+            driverSeated: true,
+            airborne: false,
+            eyeStormId: null,
+            lastDamageAt: 0,
+            lastDebrisAt: 0
+          };
+          player.vehicleId = truck.id;
+          publishPresence(true);
+          updateVehicleApp();
+        }
+
+        function handleVehicleAction() {
+          const occupied = getRiddenVehicle();
+          if (occupied) {
+            if (occupied.driverId === player.id) occupied.driverSeated = false;
+            setVehicleOccupancy(occupied, false);
+            return;
+          }
+
+          const nearby = getVehicles()
+            .filter(vehicle => Math.hypot(vehicle.x - player.x, vehicle.y - player.y) < 180)
+            .sort((first, second) => Math.hypot(first.x - player.x, first.y - player.y) - Math.hypot(second.x - player.x, second.y - player.y))
+            .find(vehicle => getVehicleOccupants(vehicle).length < 2);
+          if (nearby) {
+            setVehicleOccupancy(nearby, true);
+          } else if (!truck) {
+            summonPickup();
+          } else {
+            updateVehicleApp();
+          }
+        }
+
+        function connectMultiplayer() {
+          const config = window.MEADOW_SUPABASE;
+          if (!config?.url || !config?.anonKey) {
+            connectionStatus.textContent = 'LOCAL · SOLO';
+            chatStatus.textContent = 'Chat is offline in solo mode.';
+            return;
+          }
+
+          const joinRoom = () => {
+            if (!window.supabase?.createClient) {
+              connectionStatus.textContent = 'LOCAL · SDK UNAVAILABLE';
+              chatStatus.textContent = 'Could not load the field network.';
+              return;
+            }
+            supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+            const room = String(config.room || 'meadow-field-01').replace(/[^a-zA-Z0-9_-]/g, '-');
+            realtimeChannel = supabaseClient.channel(`meadow:${room}`, {
+              config: { presence: { key: player.id } }
+            });
+            realtimeChannel.on('presence', { event: 'sync' }, syncRemotePlayers);
+            realtimeChannel.on('broadcast', { event: 'chat' }, ({ payload }) => {
+              if (payload?.text) appendChatMessage(payload.name, payload.text);
+            });
+            realtimeChannel.subscribe(status => {
+              if (status === 'SUBSCRIBED') {
+                multiplayerReady = true;
+                updateConnectionStatus();
+                chatStatus.textContent = 'Global room · messages are temporary';
+                publishPresence(true);
+                refreshTornadoes();
+                nextTornadoFetch = performance.now() + 1800;
+              } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+                multiplayerReady = false;
+                remotePlayers.clear();
+                connectionStatus.textContent = 'LOCAL · OFFLINE';
+                chatStatus.textContent = 'Field network disconnected.';
+              } else if (status === 'SUBSCRIBING') {
+                connectionStatus.textContent = 'CONNECTING · ROOM';
+              }
+            });
+          };
+
+          if (window.supabase?.createClient) {
+            joinRoom();
+            return;
+          }
+
+          connectionStatus.textContent = 'CONNECTING · SDK';
+          const sdk = document.createElement('script');
+          sdk.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+          sdk.onload = joinRoom;
+          sdk.onerror = () => {
+            connectionStatus.textContent = 'LOCAL · SDK UNAVAILABLE';
+            chatStatus.textContent = 'Could not load the field network.';
+          };
+          document.head.append(sdk);
         }
 
         function setPaused(value) {
           paused = value;
-          pauseScreen.classList.toggle('is-visible', paused);
+          pauseScreen.classList.toggle('is-visible', paused && gameStarted && !dead);
           pauseButton.setAttribute('aria-label', paused ? 'Resume game' : 'Pause game');
           pauseButton.title = paused ? 'Resume game' : 'Pause game';
           pauseIcon.hidden = paused;
@@ -614,14 +2226,26 @@
           if (paused) {
             for (const direction of Object.keys(held)) held[direction] = false;
             document.querySelectorAll('.pad-button').forEach(button => button.classList.remove('is-down'));
+            phoneOpen = false;
+            phonePanel.hidden = true;
+            phoneButton.setAttribute('aria-expanded', 'false');
           }
+          publishPresence(true);
         }
 
         function update(time) {
           const delta = Math.min((time - previousTime) / 1000, 0.05);
           previousTime = time;
 
-          if (!paused) {
+          if (gameStarted && multiplayerReady && time >= nextTornadoFetch) {
+            nextTornadoFetch = time + 1800;
+            refreshTornadoes();
+          }
+
+          if (gameStarted && !paused && !dead && radarReady) updateWindDebris(delta, time);
+          if (gameStarted && !paused && !dead) updateVehiclePhysics(delta, time);
+
+          if (gameStarted && !paused && !dead && !phoneOpen && !player.vehicleId) {
             let horizontal = Number(held.right) - Number(held.left);
             let vertical = Number(held.down) - Number(held.up);
             const magnitude = Math.hypot(horizontal, vertical) || 1;
@@ -634,19 +2258,24 @@
               player.facing = Math.abs(horizontal) > Math.abs(vertical)
                 ? (horizontal > 0 ? 'right' : 'left')
                 : (vertical > 0 ? 'down' : 'up');
-              player.step += delta * 10;
             }
+            publishPresence();
           }
 
+          advanceContract(delta);
+          checkStormProximity(time);
           render(time);
           window.requestAnimationFrame(update);
         }
 
         window.addEventListener('keydown', event => {
           if (event.key === 'Escape') {
-            setPaused(!paused);
+            if (phoneOpen) togglePhone(false);
+            else if (gameStarted && !dead) setPaused(!paused);
             return;
           }
+          if (!gameStarted || paused || dead || phoneOpen) return;
+          if (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
           const direction = directions[event.key];
           if (!direction) return;
           event.preventDefault();
@@ -667,7 +2296,7 @@
           const direction = button.dataset.dir;
           button.addEventListener('pointerdown', event => {
             event.preventDefault();
-            if (paused) return;
+            if (!gameStarted || paused || dead || phoneOpen) return;
             button.setPointerCapture(event.pointerId);
             held[direction] = true;
             button.classList.add('is-down');
@@ -681,14 +2310,45 @@
           button.addEventListener('lostpointercapture', release);
         });
 
-        pauseButton.addEventListener('click', () => setPaused(!paused));
-        document.querySelector('#reset-button').addEventListener('click', () => {
-          player.x = start.x;
-          player.y = start.y;
-          player.facing = 'down';
+        startForm.addEventListener('submit', event => {
+          event.preventDefault();
+          player.name = playerNameInput.value.trim().replace(/\s+/g, ' ').slice(0, 16);
+          if (!player.name) {
+            player.name = `gary${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+            playerNameInput.value = player.name;
+          }
+          gameStarted = true;
+          mainMenu.hidden = true;
           setPaused(false);
+          connectMultiplayer();
         });
 
+        document.querySelectorAll('[data-player-color]').forEach(button => {
+          button.addEventListener('click', () => {
+            player.color = button.dataset.playerColor;
+            document.querySelectorAll('[data-player-color]').forEach(swatch => {
+              swatch.setAttribute('aria-pressed', String(swatch === button));
+            });
+          });
+        });
+
+        phoneButton.addEventListener('click', () => togglePhone());
+        document.querySelector('#phone-close-button').addEventListener('click', () => togglePhone(false));
+        phoneHomeButton.addEventListener('click', () => setPhoneApp('home'));
+        document.querySelectorAll('[data-open-app]').forEach(button => {
+          button.addEventListener('click', () => setPhoneApp(button.dataset.openApp));
+        });
+        vehicleActionButton.addEventListener('click', handleVehicleAction);
+        chatForm.addEventListener('submit', sendChatMessage);
+        document.querySelector('#respawn-button').addEventListener('click', respawnPlayer);
+        pauseButton.addEventListener('click', () => {
+          if (gameStarted && !dead) setPaused(!paused);
+        });
+        document.querySelector('#reset-button').addEventListener('click', () => {
+          if (gameStarted && !dead) respawnPlayer();
+        });
+
+        setPaused(true);
         window.addEventListener('resize', resize);
         resize();
         window.requestAnimationFrame(update);
